@@ -222,17 +222,19 @@ func _on_mobile_pause_pressed():
 
 func handle_inputs():
 	var can_act = state not in [PlayerState.ATTACKING, PlayerState.ROLLING]
+	var can_jump_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
+	var can_roll_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
 
-	# Handle jump input (keyboard or mobile)
+	# Handle jump input (keyboard or mobile) - allow while moving
 	var jump_input = Input.is_action_just_pressed("jump_button") or mobile_jump_pressed
-	if jump_input and is_on_floor() and can_act:
+	if jump_input and is_on_floor() and (can_act or can_jump_while_moving):
 		velocity.y = JUMP_VELOCITY
 		state = PlayerState.JUMPING
 	mobile_jump_pressed = false  # Reset mobile input
 
-	# Handle roll input (keyboard or mobile)
+	# Handle roll input (keyboard or mobile) - allow while moving
 	var roll_input = Input.is_action_just_pressed("roll_button") or mobile_roll_pressed
-	if roll_input and is_on_floor() and can_act:
+	if roll_input and is_on_floor() and (can_act or can_roll_while_moving):
 		start_roll()
 	mobile_roll_pressed = false  # Reset mobile input
 
