@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://bsi7qebbjwqc" path="res://scenes/owl.tscn" id="10_e3hyu"]
 [ext_resource type="PackedScene" uid="uid://c8c0dk4s08i0n" path="res://scenes/crow.tscn" id="10_w7kh3"]
 [ext_resource type="AudioStream" uid="uid://bacbodj2dqt5w" path="res://music/my_blood_experiment_bass_level1.wav" id="14_o8fc1"]
+[ext_resource type="PackedScene" uid="uid://bh8x4k5l2m9n0" path="res://scenes/mobile_controls.tscn" id="15_mobile"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qfnet"]
 texture = ExtResource("3_k0juu")
@@ -3870,6 +3871,8 @@ position = Vector2(183, 186)
 
 [node name="PausedMenu" parent="CanvasLayer" instance=ExtResource("7_i7141")]
 visible = false
+
+[node name="MobileControls" parent="." instance=ExtResource("15_mobile")]
 
 [node name="ThemePlayer" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("14_o8fc1")

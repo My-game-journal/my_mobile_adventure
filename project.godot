@@ -18,6 +18,7 @@ config/icon="uid://bum8isv47gwo7"
 [autoload]
 
 saveloadglobal="*res://scripts/global_save_load.gd"
+MobileConfig="*res://scripts/mobile_config.gd"
 
 [display]
 
