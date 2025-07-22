@@ -22,24 +22,32 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+offset_left = -101.0
+offset_top = -136.0
+offset_right = 101.0
+offset_bottom = 136.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Wróć do gry" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+size_flags_vertical = 3
 theme = SubResource("Theme_jjjo5")
 text = "Wróć do gry"
 
 [node name="Zapisz" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+size_flags_vertical = 3
 text = "Zapisz"
 
 [node name="Wczytaj" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+size_flags_vertical = 3
 text = "Wczytaj"
 
 [node name="Zakończ" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+size_flags_vertical = 3
 theme = SubResource("Theme_ow8a3")
 text = "Zakończ"
 
