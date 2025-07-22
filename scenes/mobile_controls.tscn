@@ -91,21 +91,21 @@ grow_vertical = 0
 layout_mode = 1
 offset_right = 160.0
 offset_bottom = 160.0
-text = "⚔1"
+text = "A1"
 
 [node name="Attack1Button" type="Button" parent="AttackControls"]
 layout_mode = 1
 offset_left = 170.0
 offset_right = 330.0
 offset_bottom = 160.0
-text = "⚔2"
+text = "A2"
 
 [node name="Attack2Button" type="Button" parent="AttackControls"]
 layout_mode = 1
 offset_left = 340.0
 offset_right = 500.0
 offset_bottom = 160.0
-text = "⚔3"
+text = "A3"
 
 [node name="PauseButton" type="Button" parent="."]
 anchors_preset = 1
