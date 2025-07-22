@@ -167,8 +167,6 @@ func setup_mobile_controls():
 			
 			# Show mobile controls
 			mobile_controls.visible = true
-		else:
-			print("Warning: Mobile controls not found in scene tree")
 	else:
 		# Hide mobile controls on desktop
 		mobile_controls = get_node_or_null("/root/world/MobileControls")
