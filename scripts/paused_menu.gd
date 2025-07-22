@@ -14,7 +14,6 @@ func _on_zapisz_pressed() -> void:
 	if player:
 		# Save the actual player health, not the health bar value
 		saveloadglobal.save_game_data(player.position, player.health)
-		print("Game saved successfully")
 
 func _on_wczytaj_pressed() -> void:
 	var save_data = saveloadglobal.load_game_data()
@@ -27,12 +26,9 @@ func _on_wczytaj_pressed() -> void:
 			var health_bar = player.get_node_or_null("CanvasLayer/HealthBar")
 			if health_bar:
 				health_bar.value = save_data["health"]
-			print("Game loaded successfully")
 		else:
-			print("Player not found")
 			return
 	else:
-		print("No save data found")
 		return
 
 func _on_zakończ_pressed() -> void:

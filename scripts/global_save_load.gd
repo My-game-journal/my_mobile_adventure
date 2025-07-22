@@ -10,9 +10,8 @@ func save_game_data(position: Vector2, health: int) -> void:
 		var line = "%f,%f,%d" % [position.x, position.y, health]
 		file.store_line(line)
 		file.close()
-		print("Save successful: Position(", position.x, ", ", position.y, "), Health: ", health)
 	else:
-		print("Error: Could not open file for writing at ", SAVE_PATH)
+		pass
 
 func load_game_data() -> Dictionary:
 	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
@@ -26,13 +25,12 @@ func load_game_data() -> Dictionary:
 					"health": parts[2].to_int()
 				}
 				file.close()
-				print("Load successful: Position(", result["position"].x, ", ", result["position"].y, "), Health: ", result["health"])
 				return result
 			else:
-				print("Error: Invalid save file format")
+				pass
 		else:
-			print("Error: Save file is empty")
+			pass
 		file.close()
 	else:
-		print("Error: Could not open save file at ", SAVE_PATH)
+		pass
 	return {}  # Empty if fails

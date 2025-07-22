@@ -36,7 +36,6 @@ func _on_wczytaj_pressed() -> void:
 				health_bar.value = save_data["health"]
 		_switch_scene(loaded_scene)
 	else:
-		print("No save data found")
 		return
 
 func _switch_scene(new_scene: Node) -> void:
