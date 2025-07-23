@@ -504,10 +504,10 @@ limit_smoothed = true
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="HealthBar" type="ProgressBar" parent="CanvasLayer"]
-offset_left = 10.0
+offset_left = 75.0
 offset_top = 10.0
-offset_right = 210.0
-offset_bottom = 30.0
+offset_right = 275.0
+offset_bottom = 37.0
 size_flags_horizontal = 3
 theme_override_styles/fill = SubResource("StyleBoxFlat_ur7pv")
 value = 100.0
