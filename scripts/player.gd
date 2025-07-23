@@ -27,6 +27,10 @@ var current_combo_index := 0
 var can_combo := false  # Whether we can continue the combo
 var combo_timer: Timer
 
+# Attack safety variables
+var attack_stuck_timer: Timer
+var attack_stuck_timeout := 2.0  # Maximum time to stay in attack state
+
 # Mobile controls reference
 var mobile_controls: CanvasLayer = null
 
@@ -59,6 +63,13 @@ func _ready():
 	combo_timer.connect("timeout", Callable(self, "_on_combo_timeout"))
 	add_child(combo_timer)
 	
+	# Setup attack safety timer
+	attack_stuck_timer = Timer.new()
+	attack_stuck_timer.wait_time = attack_stuck_timeout
+	attack_stuck_timer.one_shot = true
+	attack_stuck_timer.connect("timeout", Callable(self, "_on_attack_stuck_timeout"))
+	add_child(attack_stuck_timer)
+	
 	# Setup mobile controls
 	setup_mobile_controls()
 
@@ -66,6 +77,14 @@ func _on_combo_timeout():
 	# Reset combo po upływie czasu
 	current_combo_index = 0
 	can_combo = false
+
+func _on_attack_stuck_timeout():
+	# Safety mechanism: force exit from attack state if stuck too long
+	if state == PlayerState.ATTACKING:
+		state = PlayerState.IDLE
+		can_combo = false
+		current_combo_index = 0
+		velocity.x = 0  # Clear any residual velocity
 
 func _physics_process(delta: float) -> void:
 	handle_gravity(delta)
@@ -258,13 +277,28 @@ func handle_inputs():
 			$ShieldBox.get_node("CollisionShape2D").disabled = true
 			state = PlayerState.IDLE
 
-# ZMIANA: Simplifikowana funkcja do obsługi systemu combo
+# IMPROVED: Better attack handling with consistent direction
 func start_next_attack():
 	# Restart combo timer
 	combo_timer.start()
 	
+	# Start attack safety timer
+	attack_stuck_timer.start()
+	
 	# Disable combo window initially
 	can_combo = false
+	
+	# Set attack direction based on current input or maintain last direction
+	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
+	var current_input_direction = keyboard_direction + mobile_direction
+	current_input_direction = clamp(current_input_direction, -1.0, 1.0)
+	
+	# Update attack direction: use input direction if available, otherwise keep last direction
+	if current_input_direction != 0:
+		last_direction = current_input_direction
+	
+	# Set the flip direction for this attack
+	$AnimatedSprite2D.flip_h = last_direction < 0
 	
 	# Pobierz nazwę animacji dla obecnego indeksu combo
 	var anim_name = combo_sequence[current_combo_index]
@@ -293,7 +327,7 @@ func start_next_attack():
 	# Przygotuj następny krok combo
 	current_combo_index = (current_combo_index + 1) % combo_sequence.size()
 
-# POPRAWIONE: Enhanced movement to allow directional control during all states
+# IMPROVED: Enhanced movement with better attack handling
 func handle_movement():
 	# Get direction from keyboard and mobile controls
 	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
@@ -302,8 +336,11 @@ func handle_movement():
 	# Clamp to prevent double speed when both inputs are active
 	direction = clamp(direction, -1.0, 1.0)
 	
+	# Update last_direction for flipping, but be more careful during attacks
 	if direction != 0:
-		last_direction = direction
+		if state != PlayerState.ATTACKING:
+			# Only update direction when not attacking to prevent stuck flipping
+			last_direction = direction
 
 	# Apply movement based on state - allow directional control in most states
 	match state:
@@ -313,15 +350,21 @@ func handle_movement():
 				velocity.x = direction * ROLL_SPEED
 			else:
 				velocity.x = last_direction * ROLL_SPEED * 0.7  # Maintain some momentum if no input
-		PlayerState.ATTACKING, PlayerState.SHIELDING:
-			# No movement during attacks or shielding
+		PlayerState.ATTACKING:
+			# Reduced movement during attacks - not completely locked
+			velocity.x = velocity.x * 0.8  # Gradual deceleration instead of instant stop
+		PlayerState.SHIELDING:
+			# No movement during shielding
 			velocity.x = 0
 		_:
 			# Normal movement for IDLE, RUNNING, JUMPING
 			velocity.x = direction * SPEED
 
 func update_animation():
-	$AnimatedSprite2D.flip_h = last_direction < 0
+	# Only update flip during attacks if we're actually starting a new attack
+	# This prevents the stuck flipping issue
+	if state != PlayerState.ATTACKING:
+		$AnimatedSprite2D.flip_h = last_direction < 0
 
 	if not is_on_floor():
 		# In air animations - prioritize jumping if in jumping state
@@ -338,7 +381,7 @@ func update_animation():
 			PlayerState.ROLLING:
 				$AnimatedSprite2D.play("roll")
 			PlayerState.ATTACKING:
-				pass  # Attack animation is already being handled
+				pass  # Attack animation is already being handled - don't change flip here
 			_:
 				# For IDLE, RUNNING, JUMPING (when on ground)
 				if direction != 0:
@@ -409,11 +452,21 @@ func _on_AnimatedSprite2D_frame_changed():
 				else:
 					state = PlayerState.IDLE      # If idle, transition to idle
 
-# ZMIANA: Simplifikowana funkcja do obsługi zakończenia animacji ataku
+# IMPROVED: Better combo finish with stuck prevention
 func handle_combo_finish():
-	# Zawsze przejdź do idle po zakończeniu ataku
-	state = PlayerState.IDLE
+	# Stop attack safety timer
+	attack_stuck_timer.stop()
+	
+	# Always ensure we exit attack state
+	if state == PlayerState.ATTACKING:
+		state = PlayerState.IDLE
+	
 	can_combo = false
+	
+	# Add safety check: if velocity is very small, make sure we can move again
+	if abs(velocity.x) < 1.0:
+		velocity.x = 0
+	
 	# Timer będzie odpowiedzialny za reset combo index
 
 func _on_hitbox_body_entered(body):
