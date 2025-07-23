@@ -49,7 +49,7 @@ You begin your journey wearing medieval armor, wielding a sword and shield — f
 - DeepSeek
 - Claude
 
-Each of them helped in a different aspect — from logic and scripting to writing and design. Creating this game and playing around with these tools is, for me, a kind of entertainment, and almost therapy.
+Each of them helped in a different aspect — from logic and scripting to writing and design. Creating this game and playing around with these tools is, for me, a kind of entertainment or almost therapy.
 
 ---
 
