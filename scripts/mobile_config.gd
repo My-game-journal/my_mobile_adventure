@@ -14,8 +14,12 @@ static func configure_for_mobile():
 	# Configure mobile-specific settings
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	
-	# Disable mouse cursor on mobile
-	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	# Show mouse cursor for testing on laptop, hide on actual mobile
+	if OS.get_name() in ["Android", "iOS"]:
+		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	else:
+		# Keep mouse visible for testing on desktop/laptop
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	
 	# Set appropriate window flags for mobile
 	if OS.get_name() == "Android":

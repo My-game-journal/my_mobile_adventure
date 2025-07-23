@@ -91,7 +91,7 @@ offset_top = -80.0
 offset_right = 160.0
 offset_bottom = 80.0
 grow_vertical = 2
-text = "X"
+text = "BLOCK"
 
 [node name="AttackControls" type="Control" parent="."]
 layout_mode = 3
@@ -120,7 +120,7 @@ offset_right = 80.0
 offset_bottom = 80.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "A1"
+text = "ATTACK"
 
 [node name="PauseButton" type="Button" parent="."]
 anchors_preset = 1

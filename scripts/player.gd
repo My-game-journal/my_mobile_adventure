@@ -21,10 +21,10 @@ var time_accumulator := 0.0
 var camera_target_position := Vector2.ZERO
 var camera_smooth_speed := 0.5
 
-# Combo system variables
+# Combo system variables - Simplified approach
 var combo_sequence = ["attack_0", "attack_1", "attack_2"]
 var current_combo_index := 0
-var queued_attack := false
+var can_combo := false  # Whether we can continue the combo
 var combo_timer: Timer
 
 # Mobile controls reference
@@ -65,7 +65,7 @@ func _ready():
 func _on_combo_timeout():
 	# Reset combo po upływie czasu
 	current_combo_index = 0
-	queued_attack = false
+	can_combo = false
 
 func _physics_process(delta: float) -> void:
 	handle_gravity(delta)
@@ -156,7 +156,7 @@ func setup_mobile_controls():
 	preload("res://scripts/mobile_config.gd").configure_for_mobile()
 	
 	# Look for mobile controls in the scene tree
-	mobile_controls = get_node_or_null("/root/MobileControls")
+	mobile_controls = get_node_or_null("/root/world/MobileControls")
 	if mobile_controls:
 		# Connect mobile control signals
 		mobile_controls.move_left_pressed.connect(_on_mobile_move_left_pressed)
@@ -218,29 +218,34 @@ func handle_inputs():
 	var can_jump_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
 	var can_roll_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
 
-	# Handle jump input
-	if mobile_jump_pressed and is_on_floor() and (can_act or can_jump_while_moving):
+	# Handle jump input (keyboard + mobile + mouse middle click)
+	var jump_input = Input.is_action_just_pressed("jump_button") or mobile_jump_pressed
+	if jump_input and is_on_floor() and (can_act or can_jump_while_moving):
 		velocity.y = JUMP_VELOCITY
 		state = PlayerState.JUMPING
 	mobile_jump_pressed = false
 
-	# Handle roll input
-	if mobile_roll_pressed and is_on_floor() and (can_act or can_roll_while_moving):
+	# Handle roll input (keyboard + mobile)
+	var roll_input = Input.is_action_just_pressed("roll_button") or mobile_roll_pressed
+	if roll_input and is_on_floor() and (can_act or can_roll_while_moving):
 		start_roll()
 	mobile_roll_pressed = false
 
-	# ZMIANA: System combo z jednym przyciskiem
-	if mobile_attack_pressed and can_act:
-		# Jeśli już atakujemy, ustaw kolejkowanie
-		if state == PlayerState.ATTACKING:
-			queued_attack = true
-		else:
+	# Handle attack input (keyboard + mobile) - Simplified combo logic
+	var attack_input = Input.is_action_just_pressed("attack_button") or mobile_attack_pressed
+	if attack_input:
+		if can_act:
+			# Start new attack if we can act
+			start_next_attack()
+		elif state == PlayerState.ATTACKING and can_combo:
+			# Start next combo attack immediately if combo window is open
 			start_next_attack()
 	
 	mobile_attack_pressed = false
 
-	# Handle shield input
-	if mobile_shield_active and can_act:
+	# Handle shield input (keyboard + mobile)
+	var shield_input = Input.is_action_pressed("shield_button") or mobile_shield_active
+	if shield_input and can_act:
 		state = PlayerState.SHIELDING
 		$ShieldBox.monitoring = true
 		$ShieldBox.get_node("CollisionShape2D").disabled = false
@@ -251,10 +256,13 @@ func handle_inputs():
 			$ShieldBox.get_node("CollisionShape2D").disabled = true
 			state = PlayerState.IDLE
 
-# ZMIANA: Nowa funkcja do obsługi systemu combo
+# ZMIANA: Simplifikowana funkcja do obsługi systemu combo
 func start_next_attack():
-	# Uruchom timer combo
+	# Restart combo timer
 	combo_timer.start()
+	
+	# Disable combo window initially
+	can_combo = false
 	
 	# Pobierz nazwę animacji dla obecnego indeksu combo
 	var anim_name = combo_sequence[current_combo_index]
@@ -285,8 +293,12 @@ func start_next_attack():
 
 # POPRAWIONE: Pełna implementacja handle_movement
 func handle_movement():
-	# Get direction from mobile controls only
-	direction = mobile_direction
+	# Get direction from keyboard and mobile controls
+	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
+	direction = keyboard_direction + mobile_direction
+	
+	# Clamp to prevent double speed when both inputs are active
+	direction = clamp(direction, -1.0, 1.0)
 	
 	if direction != 0:
 		last_direction = direction
@@ -345,16 +357,22 @@ func _on_AnimatedSprite2D_frame_changed():
 	match anim:
 		"attack_0":
 			handle_hitbox_frames($HitBoxAttack0, frame == 5)
+			# Enable combo window in the middle/end of the attack
+			can_combo = frame >= 3
 			if is_last_frame(anim):
 				handle_combo_finish()
 
 		"attack_1":
 			handle_hitbox_frames($HitBoxAttack1, frame in [2, 5])
+			# Enable combo window in the middle/end of the attack
+			can_combo = frame >= 4
 			if is_last_frame(anim):
 				handle_combo_finish()
 
 		"attack_2":
 			handle_hitbox_frames($HitBoxAttack2, frame in range(2, 6))
+			# Enable combo window in the middle/end of the attack
+			can_combo = frame >= 4
 			if is_last_frame(anim):
 				handle_combo_finish()
 
@@ -362,17 +380,12 @@ func _on_AnimatedSprite2D_frame_changed():
 			if is_last_frame(anim):
 				state = PlayerState.IDLE
 
-# ZMIANA: Nowa funkcja do obsługi zakończenia animacji ataku
+# ZMIANA: Simplifikowana funkcja do obsługi zakończenia animacji ataku
 func handle_combo_finish():
-	# Jeśli mamy kolejkowany atak, uruchom następny
-	if queued_attack:
-		queued_attack = false
-		start_next_attack()
-	else:
-		# Jeśli nie ma kolejkowanego ataku, zakończ combo
-		state = PlayerState.IDLE
-		combo_timer.stop()
-		current_combo_index = 0
+	# Zawsze przejdź do idle po zakończeniu ataku
+	state = PlayerState.IDLE
+	can_combo = false
+	# Timer będzie odpowiedzialny za reset combo index
 
 func _on_hitbox_body_entered(body):
 	if body.is_in_group("enemies"):

@@ -9,9 +9,7 @@ signal jump_pressed
 signal roll_pressed
 signal shield_pressed
 signal shield_released
-signal attack_0_pressed
-signal attack_1_pressed
-signal attack_2_pressed
+signal attack_pressed
 signal pause_pressed
 
 # Movement state tracking
@@ -34,10 +32,41 @@ func _ready():
 	
 	# Connect attack buttons
 	$AttackControls/AttackButton.pressed.connect(_on_attack_pressed)
-
 	
 	# Connect pause button
 	$PauseButton.pressed.connect(_on_pause_pressed)
+	
+	# Setup mouse-friendly properties for testing
+	setup_mouse_interaction()
+
+# Setup mouse-friendly properties for testing
+func setup_mouse_interaction():
+	# Enable mouse filter for all buttons to ensure they work with mouse
+	var buttons = [
+		$LeftControls/MoveLeftButton,
+		$LeftControls/MoveRightButton,
+		$RightControls/JumpButton,
+		$RightControls/RollButton,
+		$RightControls/ShieldButton,
+		$AttackControls/AttackButton,
+		$PauseButton
+	]
+	
+	for button in buttons:
+		if button:
+			# Ensure buttons can receive mouse input
+			button.mouse_filter = Control.MOUSE_FILTER_PASS
+			# Add hover effects for better visual feedback
+			button.mouse_entered.connect(_on_button_hover.bind(button))
+			button.mouse_exited.connect(_on_button_unhover.bind(button))
+
+func _on_button_hover(button: Button):
+	# Add visual feedback when hovering over buttons
+	button.modulate = Color(1.2, 1.2, 1.2)  # Slightly brighter
+
+func _on_button_unhover(button: Button):
+	# Remove hover effect
+	button.modulate = Color.WHITE
 
 # Movement button handlers
 func _on_move_left_pressed():
@@ -73,7 +102,7 @@ func _on_shield_released():
 
 # Attack button handlers
 func _on_attack_pressed():
-	attack_0_pressed.emit()
+	attack_pressed.emit()
 
 func _on_pause_pressed():
 	pause_pressed.emit()
