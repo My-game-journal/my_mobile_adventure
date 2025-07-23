@@ -4,6 +4,7 @@ const SPEED = 150.0
 const JUMP_VELOCITY = -250.0
 const GRAVITY = 900.0
 const ROLL_SPEED = 175.0
+const COMBO_TIMEOUT = 0.8  # Czas na kolejny atak w combo
 
 enum PlayerState { IDLE, RUNNING, JUMPING, ATTACKING, ROLLING, SHIELDING }
 var state = PlayerState.IDLE
@@ -20,6 +21,12 @@ var time_accumulator := 0.0
 var camera_target_position := Vector2.ZERO
 var camera_smooth_speed := 0.5
 
+# Combo system variables
+var combo_sequence = ["attack_0", "attack_1", "attack_2"]
+var current_combo_index := 0
+var queued_attack := false
+var combo_timer: Timer
+
 # Mobile controls reference
 var mobile_controls: CanvasLayer = null
 
@@ -28,9 +35,7 @@ var mobile_direction := 0.0
 var mobile_jump_pressed := false
 var mobile_roll_pressed := false
 var mobile_shield_active := false
-var mobile_attack_0_pressed := false
-var mobile_attack_1_pressed := false
-var mobile_attack_2_pressed := false
+var mobile_attack_pressed := false  # Jeden przycisk ataku zamiast trzech
 
 func _ready():
 	$AnimatedSprite2D.frame_changed.connect(_on_AnimatedSprite2D_frame_changed)
@@ -41,15 +46,26 @@ func _ready():
 	var health_bar = get_node_or_null("CanvasLayer/HealthBar")
 	if health_bar:
 		health_bar.value = health
-		health_bar.value = health
 	
 	# Initialize camera target position
 	camera_target_position = global_position
 	# Disable built-in smoothing to use our custom implementation
 	$Camera2D.position_smoothing_enabled = false
 	
+	# Setup combo timer
+	combo_timer = Timer.new()
+	combo_timer.wait_time = COMBO_TIMEOUT
+	combo_timer.one_shot = true
+	combo_timer.connect("timeout", Callable(self, "_on_combo_timeout"))
+	add_child(combo_timer)
+	
 	# Setup mobile controls
 	setup_mobile_controls()
+
+func _on_combo_timeout():
+	# Reset combo po upływie czasu
+	current_combo_index = 0
+	queued_attack = false
 
 func _physics_process(delta: float) -> void:
 	handle_gravity(delta)
@@ -58,7 +74,7 @@ func _physics_process(delta: float) -> void:
 	update_animation()
 	move_and_slide()
 	
-	# Snap player position to pixel boundaries first
+	# Snap player position to pixel boundaries
 	global_position = Vector2(round(global_position.x), round(global_position.y))
 	
 	# Custom smooth camera with pixel-perfect positioning
@@ -140,7 +156,7 @@ func setup_mobile_controls():
 	preload("res://scripts/mobile_config.gd").configure_for_mobile()
 	
 	# Look for mobile controls in the scene tree
-	mobile_controls = get_node_or_null("/root/world/MobileControls")
+	mobile_controls = get_node_or_null("/root/MobileControls")
 	if mobile_controls:
 		# Connect mobile control signals
 		mobile_controls.move_left_pressed.connect(_on_mobile_move_left_pressed)
@@ -151,9 +167,7 @@ func setup_mobile_controls():
 		mobile_controls.roll_pressed.connect(_on_mobile_roll_pressed)
 		mobile_controls.shield_pressed.connect(_on_mobile_shield_pressed)
 		mobile_controls.shield_released.connect(_on_mobile_shield_released)
-		mobile_controls.attack_0_pressed.connect(_on_mobile_attack_0_pressed)
-		mobile_controls.attack_1_pressed.connect(_on_mobile_attack_1_pressed)
-		mobile_controls.attack_2_pressed.connect(_on_mobile_attack_2_pressed)
+		mobile_controls.attack_pressed.connect(_on_mobile_attack_pressed)
 		mobile_controls.pause_pressed.connect(_on_mobile_pause_pressed)
 		
 		# Show mobile controls
@@ -186,14 +200,9 @@ func _on_mobile_shield_pressed():
 func _on_mobile_shield_released():
 	mobile_shield_active = false
 
-func _on_mobile_attack_0_pressed():
-	mobile_attack_0_pressed = true
-
-func _on_mobile_attack_1_pressed():
-	mobile_attack_1_pressed = true
-
-func _on_mobile_attack_2_pressed():
-	mobile_attack_2_pressed = true
+# ZMIANA: Jeden handler dla przycisku ataku
+func _on_mobile_attack_pressed():
+	mobile_attack_pressed = true
 
 func _on_mobile_pause_pressed():
 	# Handle pause functionality
@@ -209,31 +218,28 @@ func handle_inputs():
 	var can_jump_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
 	var can_roll_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
 
-	# Handle jump input (mobile only)
+	# Handle jump input
 	if mobile_jump_pressed and is_on_floor() and (can_act or can_jump_while_moving):
 		velocity.y = JUMP_VELOCITY
 		state = PlayerState.JUMPING
-	mobile_jump_pressed = false  # Reset mobile input
+	mobile_jump_pressed = false
 
-	# Handle roll input (mobile only)
+	# Handle roll input
 	if mobile_roll_pressed and is_on_floor() and (can_act or can_roll_while_moving):
 		start_roll()
-	mobile_roll_pressed = false  # Reset mobile input
+	mobile_roll_pressed = false
 
-	# Handle attack inputs (mobile only)
-	if mobile_attack_0_pressed and can_act:
-		start_attack("attack_0", $HitBoxAttack0)
-	elif mobile_attack_1_pressed and can_act:
-		start_attack("attack_1", $HitBoxAttack1)
-	elif mobile_attack_2_pressed and can_act:
-		start_attack("attack_2", $HitBoxAttack2)
+	# ZMIANA: System combo z jednym przyciskiem
+	if mobile_attack_pressed and can_act:
+		# Jeśli już atakujemy, ustaw kolejkowanie
+		if state == PlayerState.ATTACKING:
+			queued_attack = true
+		else:
+			start_next_attack()
 	
-	# Reset mobile attack inputs
-	mobile_attack_0_pressed = false
-	mobile_attack_1_pressed = false
-	mobile_attack_2_pressed = false
+	mobile_attack_pressed = false
 
-	# Handle shield input (mobile only)
+	# Handle shield input
 	if mobile_shield_active and can_act:
 		state = PlayerState.SHIELDING
 		$ShieldBox.monitoring = true
@@ -245,6 +251,39 @@ func handle_inputs():
 			$ShieldBox.get_node("CollisionShape2D").disabled = true
 			state = PlayerState.IDLE
 
+# ZMIANA: Nowa funkcja do obsługi systemu combo
+func start_next_attack():
+	# Uruchom timer combo
+	combo_timer.start()
+	
+	# Pobierz nazwę animacji dla obecnego indeksu combo
+	var anim_name = combo_sequence[current_combo_index]
+	
+	# Wybierz odpowiedni hitbox
+	var hitbox
+	match anim_name:
+		"attack_0":
+			hitbox = $HitBoxAttack0
+		"attack_1":
+			hitbox = $HitBoxAttack1
+		"attack_2":
+			hitbox = $HitBoxAttack2
+		_:
+			hitbox = $HitBoxAttack0
+	
+	# Uruchom atak
+	state = PlayerState.ATTACKING
+	$AnimatedSprite2D.play(anim_name)
+	update_hitbox_flip(hitbox)
+	hitbox.monitoring = false
+	for child in hitbox.get_children():
+		if child is CollisionShape2D or child is CollisionPolygon2D:
+			child.disabled = true
+	
+	# Przygotuj następny krok combo
+	current_combo_index = (current_combo_index + 1) % combo_sequence.size()
+
+# POPRAWIONE: Pełna implementacja handle_movement
 func handle_movement():
 	# Get direction from mobile controls only
 	direction = mobile_direction
@@ -286,15 +325,6 @@ func start_roll():
 	$AnimatedSprite2D.flip_h = last_direction < 0
 	$AnimatedSprite2D.play("roll")
 
-func start_attack(anim_name: String, hitbox: Node2D):
-	state = PlayerState.ATTACKING
-	$AnimatedSprite2D.play(anim_name)
-	update_hitbox_flip(hitbox)
-	hitbox.monitoring = false
-	for child in hitbox.get_children():
-		if child is CollisionShape2D or child is CollisionPolygon2D:
-			child.disabled = true
-
 func update_hitbox_flip(hitbox: Node2D):
 	$AnimatedSprite2D.flip_h = last_direction < 0
 	hitbox.scale.x = -1 if last_direction < 0 else 1
@@ -316,21 +346,33 @@ func _on_AnimatedSprite2D_frame_changed():
 		"attack_0":
 			handle_hitbox_frames($HitBoxAttack0, frame == 5)
 			if is_last_frame(anim):
-				state = PlayerState.IDLE
+				handle_combo_finish()
 
 		"attack_1":
 			handle_hitbox_frames($HitBoxAttack1, frame in [2, 5])
 			if is_last_frame(anim):
-				state = PlayerState.IDLE
+				handle_combo_finish()
 
 		"attack_2":
 			handle_hitbox_frames($HitBoxAttack2, frame in range(2, 6))
 			if is_last_frame(anim):
-				state = PlayerState.IDLE
+				handle_combo_finish()
 
 		"roll":
 			if is_last_frame(anim):
 				state = PlayerState.IDLE
+
+# ZMIANA: Nowa funkcja do obsługi zakończenia animacji ataku
+func handle_combo_finish():
+	# Jeśli mamy kolejkowany atak, uruchom następny
+	if queued_attack:
+		queued_attack = false
+		start_next_attack()
+	else:
+		# Jeśli nie ma kolejkowanego ataku, zakończ combo
+		state = PlayerState.IDLE
+		combo_timer.stop()
+		current_combo_index = 0
 
 func _on_hitbox_body_entered(body):
 	if body.is_in_group("enemies"):

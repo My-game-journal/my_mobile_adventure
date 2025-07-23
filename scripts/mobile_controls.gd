@@ -33,9 +33,8 @@ func _ready():
 	$RightControls/ShieldButton.button_up.connect(_on_shield_released)
 	
 	# Connect attack buttons
-	$AttackControls/Attack0Button.pressed.connect(_on_attack_0_pressed)
-	$AttackControls/Attack1Button.pressed.connect(_on_attack_1_pressed)
-	$AttackControls/Attack2Button.pressed.connect(_on_attack_2_pressed)
+	$AttackControls/AttackButton.pressed.connect(_on_attack_pressed)
+
 	
 	# Connect pause button
 	$PauseButton.pressed.connect(_on_pause_pressed)
@@ -73,14 +72,8 @@ func _on_shield_released():
 	shield_released.emit()
 
 # Attack button handlers
-func _on_attack_0_pressed():
+func _on_attack_pressed():
 	attack_0_pressed.emit()
-
-func _on_attack_1_pressed():
-	attack_1_pressed.emit()
-
-func _on_attack_2_pressed():
-	attack_2_pressed.emit()
 
 func _on_pause_pressed():
 	pause_pressed.emit()
