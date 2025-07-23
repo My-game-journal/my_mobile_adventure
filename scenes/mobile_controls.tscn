@@ -116,4 +116,4 @@ offset_top = 60.0
 offset_right = -60.0
 offset_bottom = 160.0
 grow_horizontal = 0
-text = "⏸"
+text = "PAUSE"
