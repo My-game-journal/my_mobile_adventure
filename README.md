@@ -1,7 +1,5 @@
 # 🩸 Blood experiment platformer
 
-![screen1](blood_experiment_platformer.png)
-
 ## 🇬🇧 English
 
 **Blood experiment platformer** is a solo-developed 2D game built in **Godot**. This is just a fragment of the full experience — many features are still in development. Currently, the game is available only in **Polish**, but multi-language support is on the way.
@@ -124,4 +122,4 @@ Jeśli grasz, zostawiasz opinię lub się inspirujesz — dziękuję! To dla mni
 
 ---
 
-
+![screen1](blood_experiment_platformer_mobile.png)
