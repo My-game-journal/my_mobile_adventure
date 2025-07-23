@@ -214,20 +214,22 @@ func _on_mobile_pause_pressed():
 			get_tree().paused = true
 
 func handle_inputs():
-	var can_act = state not in [PlayerState.ATTACKING, PlayerState.ROLLING]
-	var can_jump_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
-	var can_roll_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
+	var can_act = state not in [PlayerState.ATTACKING]
+	var can_jump = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]
+	var can_roll = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING, PlayerState.JUMPING]
 
-	# Handle jump input (keyboard + mobile + mouse middle click)
+	# Handle jump input (keyboard + mobile + mouse middle click) - Allow during any movement
 	var jump_input = Input.is_action_just_pressed("jump_button") or mobile_jump_pressed
-	if jump_input and is_on_floor() and (can_act or can_jump_while_moving):
+	if jump_input and is_on_floor() and can_jump:
 		velocity.y = JUMP_VELOCITY
-		state = PlayerState.JUMPING
+		# Don't change state to JUMPING if already rolling - maintain rolling state
+		if state != PlayerState.ROLLING:
+			state = PlayerState.JUMPING
 	mobile_jump_pressed = false
 
-	# Handle roll input (keyboard + mobile)
+	# Handle roll input (keyboard + mobile) - Allow during any ground movement
 	var roll_input = Input.is_action_just_pressed("roll_button") or mobile_roll_pressed
-	if roll_input and is_on_floor() and (can_act or can_roll_while_moving):
+	if roll_input and is_on_floor() and can_roll:
 		start_roll()
 	mobile_roll_pressed = false
 
@@ -291,7 +293,7 @@ func start_next_attack():
 	# Przygotuj następny krok combo
 	current_combo_index = (current_combo_index + 1) % combo_sequence.size()
 
-# POPRAWIONE: Pełna implementacja handle_movement
+# POPRAWIONE: Enhanced movement to allow directional control during all states
 func handle_movement():
 	# Get direction from keyboard and mobile controls
 	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
@@ -303,19 +305,32 @@ func handle_movement():
 	if direction != 0:
 		last_direction = direction
 
-	if state == PlayerState.ROLLING:
-		velocity.x = last_direction * ROLL_SPEED
-	elif state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]:
-		velocity.x = direction * SPEED
-	else:
-		velocity.x = 0
+	# Apply movement based on state - allow directional control in most states
+	match state:
+		PlayerState.ROLLING:
+			# Allow directional control during roll + boost speed
+			if direction != 0:
+				velocity.x = direction * ROLL_SPEED
+			else:
+				velocity.x = last_direction * ROLL_SPEED * 0.7  # Maintain some momentum if no input
+		PlayerState.ATTACKING, PlayerState.SHIELDING:
+			# No movement during attacks or shielding
+			velocity.x = 0
+		_:
+			# Normal movement for IDLE, RUNNING, JUMPING
+			velocity.x = direction * SPEED
 
 func update_animation():
 	$AnimatedSprite2D.flip_h = last_direction < 0
 
 	if not is_on_floor():
+		# In air animations - prioritize jumping if in jumping state
 		if state == PlayerState.JUMPING:
 			$AnimatedSprite2D.play("jump")
+		elif state == PlayerState.ROLLING:
+			$AnimatedSprite2D.play("roll")  # Allow roll animation in air
+		else:
+			$AnimatedSprite2D.play("jump")  # Default air animation
 	else:
 		match state:
 			PlayerState.SHIELDING:
@@ -325,13 +340,21 @@ func update_animation():
 			PlayerState.ATTACKING:
 				pass  # Attack animation is already being handled
 			_:
+				# For IDLE, RUNNING, JUMPING (when on ground)
 				if direction != 0:
 					$AnimatedSprite2D.play("run")
+					# If we were jumping and now moving on ground, switch to running
+					if state == PlayerState.JUMPING:
+						state = PlayerState.RUNNING
 				else:
 					$AnimatedSprite2D.play("idle")
+					# If we were moving and now stopped, switch to idle
+					if state in [PlayerState.RUNNING, PlayerState.JUMPING]:
+						state = PlayerState.IDLE
 
 func start_roll():
-	if state == PlayerState.ROLLING:
+	# Allow rolling from any non-attack/shield state
+	if state in [PlayerState.ATTACKING, PlayerState.SHIELDING]:
 		return
 	state = PlayerState.ROLLING
 	$AnimatedSprite2D.flip_h = last_direction < 0
@@ -378,7 +401,13 @@ func _on_AnimatedSprite2D_frame_changed():
 
 		"roll":
 			if is_last_frame(anim):
-				state = PlayerState.IDLE
+				# Smart state transition after roll
+				if not is_on_floor():
+					state = PlayerState.JUMPING  # If in air, transition to jumping
+				elif direction != 0:
+					state = PlayerState.RUNNING  # If moving, transition to running
+				else:
+					state = PlayerState.IDLE      # If idle, transition to idle
 
 # ZMIANA: Simplifikowana funkcja do obsługi zakończenia animacji ataku
 func handle_combo_finish():
