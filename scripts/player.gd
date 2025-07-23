@@ -22,7 +22,6 @@ var camera_smooth_speed := 0.5
 
 # Mobile controls reference
 var mobile_controls: CanvasLayer = null
-var use_mobile_controls := false
 
 # Mobile input state
 var mobile_direction := 0.0
@@ -137,41 +136,28 @@ func update_smooth_camera(delta: float) -> void:
 	camera.global_position = Vector2(round(new_x), round(new_y))
 
 func setup_mobile_controls():
-	# Check if we should use mobile controls based on platform detection
-	# Using MobileConfig autoload
-	use_mobile_controls = preload("res://scripts/mobile_config.gd").should_use_mobile_controls()
+	# Configure mobile-specific settings (mobile-only game)
+	preload("res://scripts/mobile_config.gd").configure_for_mobile()
 	
-	# For testing purposes, enable mobile controls on desktop too:
-	use_mobile_controls = true  # Comment this line out for production
-	
-	if use_mobile_controls:
-		# Configure mobile-specific settings
-		preload("res://scripts/mobile_config.gd").configure_for_mobile()
+	# Look for mobile controls in the scene tree
+	mobile_controls = get_node_or_null("/root/world/MobileControls")
+	if mobile_controls:
+		# Connect mobile control signals
+		mobile_controls.move_left_pressed.connect(_on_mobile_move_left_pressed)
+		mobile_controls.move_left_released.connect(_on_mobile_move_left_released)
+		mobile_controls.move_right_pressed.connect(_on_mobile_move_right_pressed)
+		mobile_controls.move_right_released.connect(_on_mobile_move_right_released)
+		mobile_controls.jump_pressed.connect(_on_mobile_jump_pressed)
+		mobile_controls.roll_pressed.connect(_on_mobile_roll_pressed)
+		mobile_controls.shield_pressed.connect(_on_mobile_shield_pressed)
+		mobile_controls.shield_released.connect(_on_mobile_shield_released)
+		mobile_controls.attack_0_pressed.connect(_on_mobile_attack_0_pressed)
+		mobile_controls.attack_1_pressed.connect(_on_mobile_attack_1_pressed)
+		mobile_controls.attack_2_pressed.connect(_on_mobile_attack_2_pressed)
+		mobile_controls.pause_pressed.connect(_on_mobile_pause_pressed)
 		
-		# Look for mobile controls in the scene tree
-		mobile_controls = get_node_or_null("/root/world/MobileControls")
-		if mobile_controls:
-			# Connect mobile control signals
-			mobile_controls.move_left_pressed.connect(_on_mobile_move_left_pressed)
-			mobile_controls.move_left_released.connect(_on_mobile_move_left_released)
-			mobile_controls.move_right_pressed.connect(_on_mobile_move_right_pressed)
-			mobile_controls.move_right_released.connect(_on_mobile_move_right_released)
-			mobile_controls.jump_pressed.connect(_on_mobile_jump_pressed)
-			mobile_controls.roll_pressed.connect(_on_mobile_roll_pressed)
-			mobile_controls.shield_pressed.connect(_on_mobile_shield_pressed)
-			mobile_controls.shield_released.connect(_on_mobile_shield_released)
-			mobile_controls.attack_0_pressed.connect(_on_mobile_attack_0_pressed)
-			mobile_controls.attack_1_pressed.connect(_on_mobile_attack_1_pressed)
-			mobile_controls.attack_2_pressed.connect(_on_mobile_attack_2_pressed)
-			mobile_controls.pause_pressed.connect(_on_mobile_pause_pressed)
-			
-			# Show mobile controls
-			mobile_controls.visible = true
-	else:
-		# Hide mobile controls on desktop
-		mobile_controls = get_node_or_null("/root/world/MobileControls")
-		if mobile_controls:
-			mobile_controls.visible = false
+		# Show mobile controls
+		mobile_controls.visible = true
 
 # Mobile input signal handlers
 func _on_mobile_move_left_pressed():
@@ -223,29 +209,23 @@ func handle_inputs():
 	var can_jump_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
 	var can_roll_while_moving = state in [PlayerState.IDLE, PlayerState.RUNNING]
 
-	# Handle jump input (keyboard or mobile) - allow while moving
-	var jump_input = Input.is_action_just_pressed("jump_button") or mobile_jump_pressed
-	if jump_input and is_on_floor() and (can_act or can_jump_while_moving):
+	# Handle jump input (mobile only)
+	if mobile_jump_pressed and is_on_floor() and (can_act or can_jump_while_moving):
 		velocity.y = JUMP_VELOCITY
 		state = PlayerState.JUMPING
 	mobile_jump_pressed = false  # Reset mobile input
 
-	# Handle roll input (keyboard or mobile) - allow while moving
-	var roll_input = Input.is_action_just_pressed("roll_button") or mobile_roll_pressed
-	if roll_input and is_on_floor() and (can_act or can_roll_while_moving):
+	# Handle roll input (mobile only)
+	if mobile_roll_pressed and is_on_floor() and (can_act or can_roll_while_moving):
 		start_roll()
 	mobile_roll_pressed = false  # Reset mobile input
 
-	# Handle attack inputs (keyboard or mobile)
-	var attack_0_input = Input.is_action_just_pressed("attack_button_0") or mobile_attack_0_pressed
-	var attack_1_input = Input.is_action_just_pressed("attack_button_1") or mobile_attack_1_pressed
-	var attack_2_input = Input.is_action_just_pressed("attack_button_2") or mobile_attack_2_pressed
-	
-	if attack_0_input and can_act:
+	# Handle attack inputs (mobile only)
+	if mobile_attack_0_pressed and can_act:
 		start_attack("attack_0", $HitBoxAttack0)
-	elif attack_1_input and can_act:
+	elif mobile_attack_1_pressed and can_act:
 		start_attack("attack_1", $HitBoxAttack1)
-	elif attack_2_input and can_act:
+	elif mobile_attack_2_pressed and can_act:
 		start_attack("attack_2", $HitBoxAttack2)
 	
 	# Reset mobile attack inputs
@@ -253,9 +233,8 @@ func handle_inputs():
 	mobile_attack_1_pressed = false
 	mobile_attack_2_pressed = false
 
-	# Handle shield input (keyboard or mobile)
-	var shield_input = Input.is_action_pressed("shield_button") or mobile_shield_active
-	if shield_input and can_act:
+	# Handle shield input (mobile only)
+	if mobile_shield_active and can_act:
 		state = PlayerState.SHIELDING
 		$ShieldBox.monitoring = true
 		$ShieldBox.get_node("CollisionShape2D").disabled = false
@@ -267,9 +246,8 @@ func handle_inputs():
 			state = PlayerState.IDLE
 
 func handle_movement():
-	# Get direction from keyboard or mobile controls
-	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
-	direction = keyboard_direction if not use_mobile_controls else mobile_direction
+	# Get direction from mobile controls only
+	direction = mobile_direction
 	
 	if direction != 0:
 		last_direction = direction
