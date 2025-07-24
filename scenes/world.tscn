@@ -3874,5 +3874,6 @@ visible = false
 
 [node name="MobileControls" parent="." instance=ExtResource("15_mobile")]
 
-[node name="ThemePlayer" type="AudioStreamPlayer2D" parent="."]
+[node name="ThemePlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("15_xo05s")
+autoplay = true
