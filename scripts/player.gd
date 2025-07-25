@@ -31,6 +31,11 @@ var combo_timer: Timer
 var attack_stuck_timer: Timer
 var attack_stuck_timeout := 2.0  # Maximum time to stay in attack state
 
+# Coyote time for better jumping (allows jumping shortly after leaving ground)
+var coyote_time := 0.15  # 150ms coyote time
+var coyote_timer := 0.0
+var was_on_floor := false
+
 # Mobile controls reference
 var mobile_controls: CanvasLayer = null
 
@@ -88,6 +93,7 @@ func _on_attack_stuck_timeout():
 
 func _physics_process(delta: float) -> void:
 	handle_gravity(delta)
+	update_coyote_time(delta)
 	handle_inputs()
 	handle_movement()
 	update_animation()
@@ -108,6 +114,20 @@ func _physics_process(delta: float) -> void:
 			if health_bar.value <= 0:
 				get_tree().reload_current_scene()
 		time_accumulator = 0.0
+
+func update_coyote_time(delta: float) -> void:
+	# Update coyote time for better jumping feel
+	if is_on_floor():
+		coyote_timer = coyote_time
+		was_on_floor = true
+	else:
+		if was_on_floor:
+			coyote_timer -= delta
+		if coyote_timer <= 0:
+			was_on_floor = false
+
+func can_coyote_jump() -> bool:
+	return coyote_timer > 0 or is_on_floor()
 
 func handle_gravity(delta: float) -> void:
 	if not is_on_floor():
@@ -195,6 +215,8 @@ func setup_mobile_controls():
 # Mobile input signal handlers
 func _on_mobile_move_left_pressed():
 	mobile_direction = -1.0
+	if Input.get_connected_joypads().size() > 0:
+		Input.start_joypad_vibration(0, 0.1, 0.1, 0.1)  # Light vibration
 
 func _on_mobile_move_left_released():
 	if mobile_direction < 0:
@@ -202,6 +224,8 @@ func _on_mobile_move_left_released():
 
 func _on_mobile_move_right_pressed():
 	mobile_direction = 1.0
+	if Input.get_connected_joypads().size() > 0:
+		Input.start_joypad_vibration(0, 0.1, 0.1, 0.1)  # Light vibration
 
 func _on_mobile_move_right_released():
 	if mobile_direction > 0:
@@ -235,22 +259,33 @@ func _on_mobile_pause_pressed():
 func handle_inputs():
 	var can_act = state not in [PlayerState.ATTACKING]
 	var can_jump = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]
-	var can_roll = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING, PlayerState.JUMPING]
+	var can_roll = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]  # Remove JUMPING restriction
 
 	# Handle jump input (keyboard + mobile + mouse middle click) - Allow during any movement
 	var jump_input = Input.is_action_just_pressed("jump_button") or mobile_jump_pressed
-	if jump_input and is_on_floor() and can_jump:
+	# Allow jumping with coyote time for better feel
+	if jump_input and can_coyote_jump() and can_jump:
 		velocity.y = JUMP_VELOCITY
+		coyote_timer = 0  # Consume coyote time
 		# Don't change state to JUMPING if already rolling - maintain rolling state
 		if state != PlayerState.ROLLING:
 			state = PlayerState.JUMPING
-	mobile_jump_pressed = false
+		# Reset mobile input after successful jump
+		mobile_jump_pressed = false
 
-	# Handle roll input (keyboard + mobile) - Allow during any ground movement
+	# Handle roll input (keyboard + mobile) - Allow during movement and in air
 	var roll_input = Input.is_action_just_pressed("roll_button") or mobile_roll_pressed
-	if roll_input and is_on_floor() and can_roll:
+	# Allow rolling in air and on ground (except when attacking or shielding)
+	if roll_input and can_roll:
 		start_roll()
-	mobile_roll_pressed = false
+		# Reset mobile input after successful roll
+		mobile_roll_pressed = false
+	
+	# Reset mobile inputs if they weren't used (to prevent sticking)
+	if not (jump_input and can_coyote_jump() and can_jump):
+		mobile_jump_pressed = false
+	if not (roll_input and can_roll):
+		mobile_roll_pressed = false
 
 	# Handle attack input (keyboard + mobile) - Simplified combo logic
 	var attack_input = Input.is_action_just_pressed("attack_button") or mobile_attack_pressed
@@ -396,12 +431,19 @@ func update_animation():
 						state = PlayerState.IDLE
 
 func start_roll():
-	# Allow rolling from any non-attack/shield state
+	# Allow rolling from any state except attacking and shielding
 	if state in [PlayerState.ATTACKING, PlayerState.SHIELDING]:
 		return
+	
 	state = PlayerState.ROLLING
 	$AnimatedSprite2D.flip_h = last_direction < 0
 	$AnimatedSprite2D.play("roll")
+	
+	# Add horizontal boost for air rolls
+	if not is_on_floor():
+		# Air roll gives extra horizontal momentum
+		velocity.x = last_direction * ROLL_SPEED * 1.2
+	# Ground roll is handled in handle_movement()
 
 func update_hitbox_flip(hitbox: Node2D):
 	$AnimatedSprite2D.flip_h = last_direction < 0

@@ -87,9 +87,25 @@ func _on_move_right_released():
 
 # Action button handlers
 func _on_jump_pressed():
+	# Add visual feedback for better responsiveness
+	var jump_button = $RightControls/JumpButton
+	if jump_button:
+		# Quick visual feedback
+		var tween = create_tween()
+		tween.tween_property(jump_button, "modulate", Color(0.8, 1.2, 0.8), 0.1)
+		tween.tween_property(jump_button, "modulate", Color.WHITE, 0.1)
+	
 	jump_pressed.emit()
 
 func _on_roll_pressed():
+	# Add visual feedback for better responsiveness
+	var roll_button = $RightControls/RollButton
+	if roll_button:
+		# Quick visual feedback
+		var tween = create_tween()
+		tween.tween_property(roll_button, "modulate", Color(1.2, 0.8, 0.8), 0.1)
+		tween.tween_property(roll_button, "modulate", Color.WHITE, 0.1)
+	
 	roll_pressed.emit()
 
 func _on_shield_pressed():
