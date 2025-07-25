@@ -23,56 +23,6 @@ func _ready():
 	
 	# Ensure mobile controls are on top layer
 	layer = 100
-	
-	# Set up responsive positioning
-	_setup_responsive_controls()
-	
-	# Connect to screen size changes
-	get_viewport().size_changed.connect(_on_viewport_size_changed)
-
-func _setup_responsive_controls():
-	"""Position controls based on current screen size"""
-	var screen_size = get_viewport().get_visible_rect().size
-	var margin = 20  # Base margin from screen edges
-	var button_size = 80  # Base button size
-	
-	# Calculate scale factor based on screen size (minimum 1920x1080 as reference)
-	var scale_factor = min(screen_size.x / 1920.0, screen_size.y / 1080.0)
-	scale_factor = max(scale_factor, 0.5)  # Minimum scale
-	scale_factor = min(scale_factor, 1.5)  # Maximum scale
-	
-	var scaled_margin = margin * scale_factor
-	var scaled_button_size = button_size * scale_factor
-	
-	# Pause button - top right
-	pause_button.position = Vector2(screen_size.x - scaled_button_size - scaled_margin, scaled_margin)
-	pause_button.scale = Vector2(scale_factor, scale_factor)
-	
-	# Movement buttons - bottom left
-	move_left_button.position = Vector2(scaled_margin, screen_size.y - scaled_button_size - scaled_margin)
-	move_left_button.scale = Vector2(scale_factor, scale_factor)
-	
-	move_right_button.position = Vector2(scaled_margin * 2 + scaled_button_size, screen_size.y - scaled_button_size - scaled_margin)
-	move_right_button.scale = Vector2(scale_factor, scale_factor)
-	
-	# Action buttons - bottom right
-	var right_margin = screen_size.x - scaled_margin
-	shield_button.position = Vector2(right_margin - scaled_button_size, screen_size.y - scaled_button_size - scaled_margin)
-	shield_button.scale = Vector2(scale_factor, scale_factor)
-	
-	roll_button.position = Vector2(right_margin - scaled_button_size * 2 - scaled_margin, screen_size.y - scaled_button_size - scaled_margin)
-	roll_button.scale = Vector2(scale_factor, scale_factor)
-	
-	attack_button.position = Vector2(right_margin - scaled_button_size * 3 - scaled_margin * 2, screen_size.y - scaled_button_size - scaled_margin)
-	attack_button.scale = Vector2(scale_factor, scale_factor)
-	
-	# Jump button - positioned above attack buttons
-	jump_button.position = Vector2(right_margin - scaled_button_size * 2 - scaled_margin, screen_size.y - scaled_button_size * 2 - scaled_margin * 2)
-	jump_button.scale = Vector2(scale_factor, scale_factor)
-
-func _on_viewport_size_changed():
-	"""Called when screen size changes (orientation, window resize, etc.)"""
-	_setup_responsive_controls()
 
 func set_mobile_controls_visibility(show_controls: bool):
 	"""Toggle visibility of all mobile control buttons"""
