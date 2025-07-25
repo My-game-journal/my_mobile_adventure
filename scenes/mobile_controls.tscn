@@ -1,134 +1,62 @@
-[gd_scene load_steps=2 format=3 uid="uid://bh8x4k5l2nan0"]
+[gd_scene load_steps=9 format=3 uid="uid://dpeh1pasxlev3"]
 
-[ext_resource type="Script" uid="uid://c8xs8rr8p185r" path="res://scripts/mobile_controls.gd" id="1_mobile"]
+[ext_resource type="Script" uid="uid://wmrfvy5s03dc" path="res://scripts/mobile_controls.gd" id="1_mobile"]
+[ext_resource type="Texture2D" uid="uid://dfaeiplydel25" path="res://assets/mobile_controls/pause.png" id="1_yr8f1"]
+[ext_resource type="Texture2D" uid="uid://dbhy0rgbx856a" path="res://assets/mobile_controls/arrow_left.png" id="2_0g8qj"]
+[ext_resource type="Texture2D" uid="uid://dbqffnhbkxynw" path="res://assets/mobile_controls/arrow_right.png" id="3_kth8y"]
+[ext_resource type="Texture2D" uid="uid://bj8o2qk63hka6" path="res://assets/mobile_controls/shield.png" id="4_k6aum"]
+[ext_resource type="Texture2D" uid="uid://kajq3b3cjlb7" path="res://assets/mobile_controls/roll.png" id="5_cnqve"]
+[ext_resource type="Texture2D" uid="uid://keposxu0xclp" path="res://assets/mobile_controls/jump_arrow.png" id="6_kffq0"]
+[ext_resource type="Texture2D" uid="uid://cmfgqcft5e2tj" path="res://assets/mobile_controls/attack.png" id="7_bswi6"]
 
 [node name="MobileControls" type="CanvasLayer"]
 script = ExtResource("1_mobile")
 
-[node name="LeftControls" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 60.0
-offset_top = -320.0
-offset_right = 500.0
-offset_bottom = -50.0
-grow_vertical = 0
+[node name="PauseButton" type="TouchScreenButton" parent="."]
+modulate = Color(1, 1, 1, 0.3)
+position = Vector2(1808, 0)
+scale = Vector2(0.1, 0.1)
+texture_normal = ExtResource("1_yr8f1")
+action = "pause_menu_button"
 
-[node name="MoveLeftButton" type="Button" parent="LeftControls"]
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -80.0
-offset_right = 160.0
-offset_bottom = 80.0
-grow_vertical = 2
-text = "◀"
+[node name="MoveLeftButton" type="TouchScreenButton" parent="."]
+modulate = Color(1, 1, 1, 0.3)
+position = Vector2(100, 813)
+scale = Vector2(0.1, 0.1)
+texture_normal = ExtResource("2_0g8qj")
+action = "move_left_button"
 
-[node name="MoveRightButton" type="Button" parent="LeftControls"]
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = 180.0
-offset_top = -80.0
-offset_right = 340.0
-offset_bottom = 80.0
-grow_vertical = 2
-text = "▶"
+[node name="MoveRightButton" type="TouchScreenButton" parent="."]
+modulate = Color(1, 1, 1, 0.3)
+position = Vector2(250, 813)
+scale = Vector2(0.1, 0.1)
+texture_normal = ExtResource("3_kth8y")
+action = "move_right_button"
 
-[node name="RightControls" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -580.0
-offset_top = -200.0
-offset_right = -60.0
-offset_bottom = -40.0
-grow_horizontal = 0
-grow_vertical = 0
+[node name="ShieldButton" type="TouchScreenButton" parent="."]
+modulate = Color(1, 1, 1, 0.3)
+position = Vector2(1750, 813)
+scale = Vector2(0.1, 0.1)
+texture_normal = ExtResource("4_k6aum")
+action = "shield_button"
 
-[node name="ShieldButton" type="Button" parent="RightControls"]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -80.0
-offset_bottom = 80.0
-grow_horizontal = 0
-grow_vertical = 2
-text = "SHIELD"
+[node name="RollButton" type="TouchScreenButton" parent="."]
+modulate = Color(1, 1, 1, 0.3)
+position = Vector2(1625, 813)
+scale = Vector2(0.1, 0.1)
+texture_normal = ExtResource("5_cnqve")
+action = "roll_button"
 
-[node name="RollButton" type="Button" parent="RightControls"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -80.0
-offset_top = -80.0
-offset_right = 80.0
-offset_bottom = 80.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "ROLL"
+[node name="JumpButton" type="TouchScreenButton" parent="."]
+modulate = Color(1, 1, 1, 0.3)
+position = Vector2(1625, 693)
+scale = Vector2(0.1, 0.1)
+texture_normal = ExtResource("6_kffq0")
+action = "jump_button"
 
-[node name="JumpButton" type="Button" parent="RightControls"]
-layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -80.0
-offset_right = 160.0
-offset_bottom = 80.0
-grow_vertical = 2
-text = "JUMP"
-
-[node name="AttackControls" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -580.0
-offset_top = -370.0
-offset_right = -60.0
-offset_bottom = -210.0
-grow_horizontal = 0
-grow_vertical = 0
-
-[node name="AttackButton" type="Button" parent="AttackControls"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -80.0
-offset_top = -80.0
-offset_right = 80.0
-offset_bottom = 80.0
-grow_horizontal = 2
-grow_vertical = 2
-text = "ATTACK"
-
-[node name="PauseButton" type="Button" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -160.0
-offset_top = 60.0
-offset_right = -60.0
-offset_bottom = 160.0
-grow_horizontal = 0
-text = "PAUSE"
+[node name="AttackButton" type="TouchScreenButton" parent="."]
+modulate = Color(1, 1, 1, 0.3)
+position = Vector2(1500, 813)
+scale = Vector2(0.1, 0.1)
+texture_normal = ExtResource("7_bswi6")
+action = "attack_button"

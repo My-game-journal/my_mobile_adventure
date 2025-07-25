@@ -1,5 +1,7 @@
 # 🩸 Blood experiment platformer
 
+![screen1](blood_experiment_platformer.png)
+
 ## 🇬🇧 English
 
 **Blood experiment platformer** is a solo-developed 2D game built in **Godot**. This is just a fragment of the full experience — many features are still in development. Currently, the game is available only in **Polish**, but multi-language support is on the way.
@@ -49,7 +51,7 @@ You begin your journey wearing medieval armor, wielding a sword and shield — f
 - DeepSeek
 - Claude
 
-Each of them helped in a different aspect — from logic and scripting to writing and design. Creating this game and playing around with these tools is, for me, a kind of entertainment or almost therapy.
+Each tool supported different aspects of development — from logic and scripting to writing and design.
 
 ---
 
@@ -58,6 +60,10 @@ Each of them helped in a different aspect — from logic and scripting to writin
 This project is created **purely for entertainment and hobbyist purposes**. It is not being sold or distributed commercially in any form. The game is a personal creative journey — a passion-driven experiment — and is meant to be shared with friends, fellow developers, and curious gamers who appreciate atmospheric storytelling and platformer mechanics.
 
 If you're playing it, giving feedback, or getting inspired: thank you! That means more than any kind of monetization ever could.
+
+---
+
+### 📱 Mobile Version Coming Soon…
 
 ---
 
@@ -110,7 +116,7 @@ Rozpoczynamy w średniowiecznej zbroi, z mieczem i tarczą — znalezionymi po i
 - DeepSeek
 - Claude
 
-Każde z nich pomogło w innym aspekcie — od logiki i skryptów po pisanie i projektowanie. Tworzenie tej gry i zabawa tymi narzędźmi jest dla mnie swoistą formą rozrywki, a niemalże terapii.
+Każde z nich pomogło w innym aspekcie — od logiki i skryptów po pisanie i projektowanie.
 
 ---
 
@@ -122,4 +128,5 @@ Jeśli grasz, zostawiasz opinię lub się inspirujesz — dziękuję! To dla mni
 
 ---
 
-![screen1](blood_experiment_platformer_mobile.png)
+### 📱 Wersja mobilna już w drodze…
+

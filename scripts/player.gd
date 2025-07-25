@@ -36,16 +36,6 @@ var coyote_time := 0.15  # 150ms coyote time
 var coyote_timer := 0.0
 var was_on_floor := false
 
-# Mobile controls reference
-var mobile_controls: CanvasLayer = null
-
-# Mobile input state
-var mobile_direction := 0.0
-var mobile_jump_pressed := false
-var mobile_roll_pressed := false
-var mobile_shield_active := false
-var mobile_attack_pressed := false
-
 # Dynamic gameplay variables
 var momentum_multiplier := 1.0
 var combo_momentum := 0.0
@@ -83,9 +73,6 @@ func _ready():
 	attack_stuck_timer.one_shot = true
 	attack_stuck_timer.connect("timeout", Callable(self, "_on_attack_stuck_timeout"))
 	add_child(attack_stuck_timer)
-	
-	# Setup mobile controls
-	setup_mobile_controls()
 	
 	# Initialize dynamic gameplay
 	setup_dynamic_features()
@@ -210,33 +197,6 @@ func update_smooth_camera(delta: float) -> void:
 	# Snap camera to pixel boundaries to maintain crispness
 	camera.global_position = Vector2(round(new_x), round(new_y))
 
-func setup_mobile_controls():
-	# Configure mobile-specific settings
-	preload("res://scripts/mobile_config.gd").configure_for_mobile()
-	
-	# Try to find mobile controls in different possible locations
-	mobile_controls = get_node_or_null("/root/world/MobileControls")
-	if not mobile_controls:
-		mobile_controls = get_node_or_null("../MobileControls")
-	if not mobile_controls:
-		mobile_controls = get_node_or_null("/root/MobileControls")
-	
-	if mobile_controls:
-		# Connect mobile control signals
-		mobile_controls.move_left_pressed.connect(_on_mobile_move_left_pressed)
-		mobile_controls.move_left_released.connect(_on_mobile_move_left_released)
-		mobile_controls.move_right_pressed.connect(_on_mobile_move_right_pressed)
-		mobile_controls.move_right_released.connect(_on_mobile_move_right_released)
-		mobile_controls.jump_pressed.connect(_on_mobile_jump_pressed)
-		mobile_controls.roll_pressed.connect(_on_mobile_roll_pressed)
-		mobile_controls.shield_pressed.connect(_on_mobile_shield_pressed)
-		mobile_controls.shield_released.connect(_on_mobile_shield_released)
-		mobile_controls.attack_pressed.connect(_on_mobile_attack_pressed)
-		mobile_controls.pause_pressed.connect(_on_mobile_pause_pressed)
-		
-		# Show mobile controls
-		mobile_controls.visible = true
-
 func setup_dynamic_features():
 	# Initialize dynamic gameplay features
 	momentum_multiplier = 1.0
@@ -244,50 +204,6 @@ func setup_dynamic_features():
 	air_dash_available = false
 	movement_streak = 0
 	dynamic_camera_shake = 0.0
-
-# Mobile input signal handlers
-func _on_mobile_move_left_pressed():
-	mobile_direction = -1.0
-	update_movement_streak()
-
-func _on_mobile_move_left_released():
-	if mobile_direction < 0:
-		mobile_direction = 0.0
-
-func _on_mobile_move_right_pressed():
-	mobile_direction = 1.0
-	update_movement_streak()
-
-func _on_mobile_move_right_released():
-	if mobile_direction > 0:
-		mobile_direction = 0.0
-
-func _on_mobile_jump_pressed():
-	mobile_jump_pressed = true
-	update_movement_streak()
-
-func _on_mobile_roll_pressed():
-	mobile_roll_pressed = true
-	update_movement_streak()
-
-func _on_mobile_shield_pressed():
-	mobile_shield_active = true
-
-func _on_mobile_shield_released():
-	mobile_shield_active = false
-
-func _on_mobile_attack_pressed():
-	mobile_attack_pressed = true
-	update_movement_streak()
-
-func _on_mobile_pause_pressed():
-	# Handle pause functionality
-	var world = get_node_or_null("/root/world")
-	if world:
-		var paused_menu = world.get_node_or_null("CanvasLayer/PausedMenu")
-		if paused_menu:
-			paused_menu.visible = true
-			get_tree().paused = true
 
 # Dynamic gameplay functions
 func update_movement_streak():
@@ -326,12 +242,17 @@ func apply_camera_shake(intensity: float):
 	dynamic_camera_shake = intensity
 
 func handle_inputs():
-	var can_act = state not in [PlayerState.ATTACKING]
+	var can_act = state not in [PlayerState.ATTACKING, PlayerState.JUMPING] and is_on_floor()
 	var can_jump = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]
 	var can_roll = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]  # Remove JUMPING restriction
+	
+	# Additional check: prevent actions if jump animation is still playing
+	var is_jump_animation_playing = $AnimatedSprite2D.animation == "jump" and $AnimatedSprite2D.is_playing()
+	if is_jump_animation_playing:
+		can_act = false
 
-	# Handle jump input (keyboard + mobile) - Allow during any movement with dynamic features
-	var jump_input = Input.is_action_just_pressed("jump_button") or mobile_jump_pressed
+	# Handle jump input (keyboard only)
+	var jump_input = Input.is_action_just_pressed("jump_button")
 	# Allow jumping with coyote time for better feel
 	if jump_input and can_coyote_jump() and can_jump:
 		# Dynamic jump with momentum boost
@@ -343,11 +264,9 @@ func handle_inputs():
 			state = PlayerState.JUMPING
 		# Add small camera shake for dynamic feel
 		apply_camera_shake(0.5)
-		# Reset mobile input after successful jump
-		mobile_jump_pressed = false
 
-	# Handle roll input (keyboard + mobile) - Allow during movement and in air with air dash
-	var roll_input = Input.is_action_just_pressed("roll_button") or mobile_roll_pressed
+	# Handle roll input (keyboard only)
+	var roll_input = Input.is_action_just_pressed("roll_button")
 	# Allow rolling in air and on ground (except when attacking or shielding)
 	if roll_input and can_roll:
 		if not is_on_floor() and air_dash_available:
@@ -356,17 +275,9 @@ func handle_inputs():
 			air_dash_available = false
 		else:
 			start_roll()
-		# Reset mobile input after successful roll
-		mobile_roll_pressed = false
-	
-	# Reset mobile inputs if they weren't used (to prevent sticking)
-	if not (jump_input and can_coyote_jump() and can_jump):
-		mobile_jump_pressed = false
-	if not (roll_input and can_roll):
-		mobile_roll_pressed = false
 
-	# Handle attack input (keyboard + mobile) - Simplified combo logic with dynamic features
-	var attack_input = Input.is_action_just_pressed("attack_button") or mobile_attack_pressed
+	# Handle attack input (keyboard only)
+	var attack_input = Input.is_action_just_pressed("attack_button")
 	if attack_input:
 		if can_act:
 			# Start new attack if we can act
@@ -376,12 +287,10 @@ func handle_inputs():
 			# Start next combo attack immediately if combo window is open
 			start_next_attack()
 			combo_momentum += 0.5  # More momentum for combo chains
-	
-	mobile_attack_pressed = false
 
-	# Handle shield input (keyboard + mobile)
-	var shield_input = Input.is_action_pressed("shield_button") or mobile_shield_active
-	if shield_input and can_act:
+	# Handle shield input (keyboard only)
+	var shield_input = Input.is_action_pressed("shield_button")
+	if shield_input and can_act and is_on_floor():
 		state = PlayerState.SHIELDING
 		$ShieldBox.monitoring = true
 		$ShieldBox.get_node("CollisionShape2D").disabled = false
@@ -405,7 +314,7 @@ func start_next_attack():
 	
 	# Set attack direction based on current input or maintain last direction
 	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
-	var current_input_direction = keyboard_direction + mobile_direction
+	var current_input_direction = keyboard_direction
 	current_input_direction = clamp(current_input_direction, -1.0, 1.0)
 	
 	# Update attack direction: use input direction if available, otherwise keep last direction
@@ -454,18 +363,16 @@ func start_next_attack():
 
 # IMPROVED: Enhanced movement with better attack handling and dynamic features
 func handle_movement():
-	# Get direction from keyboard and mobile controls
+	# Get direction from keyboard only
 	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
-	direction = keyboard_direction + mobile_direction
+	direction = keyboard_direction
 	
-	# Clamp to prevent double speed when both inputs are active
+	# Clamp to prevent issues
 	direction = clamp(direction, -1.0, 1.0)
 	
-	# Update last_direction for flipping, but be more careful during attacks
+	# Update last_direction for flipping - allow during attacks for better responsiveness
 	if direction != 0:
-		if state != PlayerState.ATTACKING:
-			# Only update direction when not attacking to prevent stuck flipping
-			last_direction = direction
+		last_direction = direction
 
 	# Apply movement based on state - allow directional control in most states with dynamic features
 	match state:
@@ -480,6 +387,23 @@ func handle_movement():
 			# Reduced movement during attacks - not completely locked, with combo momentum
 			var attack_mobility = 0.8 + (combo_momentum * 0.2)
 			velocity.x = velocity.x * attack_mobility  # Gradual deceleration with combo bonus
+			
+			# Update hitbox flipping if direction changed during attack
+			if direction != 0:
+				var current_hitbox
+				var anim_name = combo_sequence[(current_combo_index - 1 + combo_sequence.size()) % combo_sequence.size()]
+				match anim_name:
+					"attack_0":
+						current_hitbox = $HitBoxAttack0
+					"attack_1":
+						current_hitbox = $HitBoxAttack1
+					"attack_2":
+						current_hitbox = $HitBoxAttack2
+					_:
+						current_hitbox = $HitBoxAttack0
+				
+				if current_hitbox:
+					current_hitbox.scale.x = -1 if last_direction < 0 else 1
 		PlayerState.SHIELDING:
 			# No movement during shielding
 			velocity.x = 0
@@ -489,10 +413,8 @@ func handle_movement():
 			velocity.x = direction * move_speed
 
 func update_animation():
-	# Only update flip during attacks if we're actually starting a new attack
-	# This prevents the stuck flipping issue
-	if state != PlayerState.ATTACKING:
-		$AnimatedSprite2D.flip_h = last_direction < 0
+	# Allow flipping at any time, including during attacks
+	$AnimatedSprite2D.flip_h = last_direction < 0
 
 	if not is_on_floor():
 		# In air animations - prioritize jumping if in jumping state
@@ -503,6 +425,25 @@ func update_animation():
 		else:
 			$AnimatedSprite2D.play("jump")  # Default air animation
 	else:
+		# Player just landed - handle state transitions carefully
+		if state == PlayerState.JUMPING:
+			# Only transition from jumping when the jump animation is near completion or finished
+			var current_anim = $AnimatedSprite2D.animation
+			if current_anim == "jump":
+				# Let jump animation finish before transitioning
+				if not $AnimatedSprite2D.is_playing() or is_last_frame("jump"):
+					# Jump animation finished, now transition to appropriate state
+					if direction != 0:
+						state = PlayerState.RUNNING
+					else:
+						state = PlayerState.IDLE
+			else:
+				# If not playing jump animation, transition immediately
+				if direction != 0:
+					state = PlayerState.RUNNING
+				else:
+					state = PlayerState.IDLE
+		
 		match state:
 			PlayerState.SHIELDING:
 				$AnimatedSprite2D.play("shield")
@@ -555,6 +496,7 @@ func start_air_dash():
 	apply_camera_shake(1.5)
 
 func update_hitbox_flip(hitbox: Node2D):
+	# Update both sprite and hitbox flipping based on current direction
 	$AnimatedSprite2D.flip_h = last_direction < 0
 	hitbox.scale.x = -1 if last_direction < 0 else 1
 
@@ -602,6 +544,14 @@ func _on_AnimatedSprite2D_frame_changed():
 					state = PlayerState.RUNNING  # If moving, transition to running
 				else:
 					state = PlayerState.IDLE      # If idle, transition to idle
+		
+		"jump":
+			if is_last_frame(anim) and is_on_floor():
+				# Jump animation finished and player is on ground - transition to appropriate state
+				if direction != 0:
+					state = PlayerState.RUNNING
+				else:
+					state = PlayerState.IDLE
 
 # IMPROVED: Better combo finish with stuck prevention
 func handle_combo_finish():

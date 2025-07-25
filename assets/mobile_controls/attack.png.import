@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dgyyfjrf0d4gb"
-path="res://.godot/imported/blood_experiment_platformer_mobile.png-fa22611003733884668c59f2b0ef586e.ctex"
+uid="uid://cmfgqcft5e2tj"
+path="res://.godot/imported/attack.png-fdea3e0cc190f8b92271d1439749cee5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://blood_experiment_platformer_mobile.png"
-dest_files=["res://.godot/imported/blood_experiment_platformer_mobile.png-fa22611003733884668c59f2b0ef586e.ctex"]
+source_file="res://assets/mobile_controls/attack.png"
+dest_files=["res://.godot/imported/attack.png-fdea3e0cc190f8b92271d1439749cee5.ctex"]
 
 [params]
 
