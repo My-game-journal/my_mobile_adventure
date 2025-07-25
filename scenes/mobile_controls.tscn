@@ -35,28 +35,28 @@ action = "move_right_button"
 
 [node name="ShieldButton" type="TouchScreenButton" parent="."]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(1750, 813)
+position = Vector2(1775, 813)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("4_k6aum")
 action = "shield_button"
 
 [node name="RollButton" type="TouchScreenButton" parent="."]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(1625, 813)
+position = Vector2(1650, 813)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("5_cnqve")
 action = "roll_button"
 
 [node name="JumpButton" type="TouchScreenButton" parent="."]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(1625, 693)
+position = Vector2(1650, 687)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("6_kffq0")
 action = "jump_button"
 
 [node name="AttackButton" type="TouchScreenButton" parent="."]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(1500, 813)
+position = Vector2(1525, 813)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("7_bswi6")
 action = "attack_button"

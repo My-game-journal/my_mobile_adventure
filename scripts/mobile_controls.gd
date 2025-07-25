@@ -51,6 +51,6 @@ func set_button_opacity(opacity: float):
 
 # Optional: Handle input events for debugging
 func _input(event):
-	# Toggle mobile controls with F1 key for testing
-	if event.is_action_pressed("ui_accept") and Input.is_key_pressed(KEY_F1):
+	# Toggle mobile controls 
+	if event.is_action_pressed("toggle_controls_button"):
 		toggle_mobile_controls()
