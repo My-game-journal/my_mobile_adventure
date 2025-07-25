@@ -215,8 +215,6 @@ func setup_mobile_controls():
 # Mobile input signal handlers
 func _on_mobile_move_left_pressed():
 	mobile_direction = -1.0
-	if Input.get_connected_joypads().size() > 0:
-		Input.start_joypad_vibration(0, 0.1, 0.1, 0.1)  # Light vibration
 
 func _on_mobile_move_left_released():
 	if mobile_direction < 0:
@@ -224,8 +222,6 @@ func _on_mobile_move_left_released():
 
 func _on_mobile_move_right_pressed():
 	mobile_direction = 1.0
-	if Input.get_connected_joypads().size() > 0:
-		Input.start_joypad_vibration(0, 0.1, 0.1, 0.1)  # Light vibration
 
 func _on_mobile_move_right_released():
 	if mobile_direction > 0:
