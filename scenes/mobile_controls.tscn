@@ -12,51 +12,80 @@
 [node name="MobileControls" type="CanvasLayer"]
 script = ExtResource("1_mobile")
 
-[node name="PauseButton" type="TouchScreenButton" parent="."]
+[node name="ControlPause" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120.0
+offset_bottom = 120.0
+grow_horizontal = 0
+
+[node name="ControlPauseButton" type="TouchScreenButton" parent="ControlPause"]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(1808, 0)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("1_yr8f1")
 action = "pause_menu_button"
 
-[node name="MoveLeftButton" type="TouchScreenButton" parent="."]
+[node name="ControlMove" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -200.0
+offset_right = 400.0
+grow_vertical = 0
+
+[node name="ControlMoveLeftButton" type="TouchScreenButton" parent="ControlMove"]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(100, 813)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("2_0g8qj")
 action = "move_left_button"
 
-[node name="MoveRightButton" type="TouchScreenButton" parent="."]
+[node name="ControlMoveRightButton" type="TouchScreenButton" parent="ControlMove"]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(250, 813)
+position = Vector2(150, 0)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("3_kth8y")
 action = "move_right_button"
 
-[node name="ShieldButton" type="TouchScreenButton" parent="."]
+[node name="ControlAction" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_top = -330.0
+offset_bottom = -80.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="ControlShieldButton" type="TouchScreenButton" parent="ControlAction"]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(1775, 813)
+position = Vector2(250, 125)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("4_k6aum")
 action = "shield_button"
 
-[node name="RollButton" type="TouchScreenButton" parent="."]
+[node name="ControlRollButton" type="TouchScreenButton" parent="ControlAction"]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(1650, 813)
+position = Vector2(125, 125)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("5_cnqve")
 action = "roll_button"
 
-[node name="JumpButton" type="TouchScreenButton" parent="."]
+[node name="ControlJumpButton" type="TouchScreenButton" parent="ControlAction"]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(1650, 687)
+position = Vector2(125, 0)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("7_0g8qj")
 action = "jump_button"
 
-[node name="AttackButton" type="TouchScreenButton" parent="."]
+[node name="ControlAttackButton" type="TouchScreenButton" parent="ControlAction"]
 modulate = Color(1, 1, 1, 0.3)
-position = Vector2(1525, 813)
+position = Vector2(0, 125)
 scale = Vector2(0.1, 0.1)
 texture_normal = ExtResource("7_bswi6")
 action = "attack_button"

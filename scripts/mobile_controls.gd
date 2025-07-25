@@ -3,13 +3,13 @@ extends CanvasLayer
 # Mobile controls management script
 # Handles showing/hiding mobile controls based on platform and settings
 
-@onready var pause_button = $PauseButton
-@onready var move_left_button = $MoveLeftButton
-@onready var move_right_button = $MoveRightButton
-@onready var shield_button = $ShieldButton
-@onready var roll_button = $RollButton
-@onready var jump_button = $JumpButton
-@onready var attack_button = $AttackButton
+@onready var pause_button = $ControlPause/ControlPauseButton
+@onready var move_left_button = $ControlMove/ControlMoveLeftButton
+@onready var move_right_button = $ControlMove/ControlMoveRightButton
+@onready var shield_button = $ControlAction/ControlShieldButton
+@onready var roll_button = $ControlAction/ControlRollButton
+@onready var jump_button = $ControlAction/ControlJumpButton
+@onready var attack_button = $ControlAction/ControlAttackButton
 
 var is_mobile_platform: bool = false
 var mobile_controls_enabled: bool = true
