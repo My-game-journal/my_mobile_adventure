@@ -20,19 +20,14 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -250.0
-offset_top = -125.0
-offset_right = 250.0
-offset_bottom = 125.0
+offset_left = -376.0
+offset_top = -272.0
+offset_right = 376.0
+offset_bottom = 272.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-
-[node name="Label" type="Label" parent="VBoxContainer"]
-layout_mode = 2
-text = "Opcje"
-horizontal_alignment = 1
 
 [node name="AudioButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
