@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=4 uid="uid://cr2vsymxhpbvf"]
+[gd_scene load_steps=23 format=4 uid="uid://cr2vsymxhpbvf"]
 
 [ext_resource type="Script" uid="uid://be0eyi2lv7llo" path="res://scripts/world.gd" id="1_4mrxx"]
 [ext_resource type="Texture2D" uid="uid://dfdpio4p4fqdx" path="res://assets/enviroment/Background.png" id="1_rwgxs"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://bsi7qebbjwqc" path="res://scenes/owl.tscn" id="10_e3hyu"]
 [ext_resource type="PackedScene" uid="uid://c8c0dk4s08i0n" path="res://scenes/crow.tscn" id="10_w7kh3"]
 [ext_resource type="AudioStream" uid="uid://dih34kpvkhn2k" path="res://music/Hexed Shadows.mp3" id="15_xo05s"]
+[ext_resource type="PackedScene" uid="uid://dpeh1pasxlev3" path="res://scenes/mobile_controls.tscn" id="16_mobile"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qfnet"]
 texture = ExtResource("3_k0juu")
@@ -3870,6 +3871,8 @@ position = Vector2(183, 186)
 
 [node name="PausedMenu" parent="CanvasLayer" instance=ExtResource("7_i7141")]
 visible = false
+
+[node name="MobileControls" parent="." instance=ExtResource("16_mobile")]
 
 [node name="ThemePlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("15_xo05s")
