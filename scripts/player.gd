@@ -215,6 +215,9 @@ func setup_mobile_controls():
 # Mobile input signal handlers
 func _on_mobile_move_left_pressed():
 	mobile_direction = -1.0
+	# Allow simultaneous jump and roll when moving
+	_on_mobile_jump_pressed()
+	_on_mobile_roll_pressed()
 
 func _on_mobile_move_left_released():
 	if mobile_direction < 0:
@@ -222,6 +225,9 @@ func _on_mobile_move_left_released():
 
 func _on_mobile_move_right_pressed():
 	mobile_direction = 1.0
+	# Allow simultaneous jump and roll when moving
+	_on_mobile_jump_pressed()
+	_on_mobile_roll_pressed()
 
 func _on_mobile_move_right_released():
 	if mobile_direction > 0:
