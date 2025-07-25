@@ -32,8 +32,9 @@ layout_mode = 3
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
+offset_left = 75.0
 offset_top = -200.0
-offset_right = 400.0
+offset_right = 475.0
 grow_vertical = 0
 
 [node name="ControlMoveLeftButton" type="TouchScreenButton" parent="ControlMove"]
