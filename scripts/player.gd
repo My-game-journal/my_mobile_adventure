@@ -36,16 +36,6 @@ var coyote_time := 0.15  # 150ms coyote time
 var coyote_timer := 0.0
 var was_on_floor := false
 
-# Mobile controls reference
-var mobile_controls: CanvasLayer = null
-
-# Mobile input state
-var mobile_direction := 0.0
-var mobile_jump_pressed := false
-var mobile_roll_pressed := false
-var mobile_shield_active := false
-var mobile_attack_pressed := false  # Jeden przycisk ataku zamiast trzech
-
 func _ready():
 	$AnimatedSprite2D.frame_changed.connect(_on_AnimatedSprite2D_frame_changed)
 	$HitBoxAttack0.connect("body_entered", Callable(self, "_on_hitbox_body_entered"))
@@ -74,9 +64,6 @@ func _ready():
 	attack_stuck_timer.one_shot = true
 	attack_stuck_timer.connect("timeout", Callable(self, "_on_attack_stuck_timeout"))
 	add_child(attack_stuck_timer)
-	
-	# Setup mobile controls
-	setup_mobile_controls()
 
 func _on_combo_timeout():
 	# Reset combo po upływie czasu
@@ -190,81 +177,13 @@ func update_smooth_camera(delta: float) -> void:
 	# Snap camera to pixel boundaries to maintain crispness
 	camera.global_position = Vector2(round(new_x), round(new_y))
 
-func setup_mobile_controls():
-	# Configure mobile-specific settings (mobile-only game)
-	preload("res://scripts/mobile_config.gd").configure_for_mobile()
-	
-	# Look for mobile controls in the scene tree
-	mobile_controls = get_node_or_null("/root/world/MobileControls")
-	if mobile_controls:
-		# Connect mobile control signals
-		mobile_controls.move_left_pressed.connect(_on_mobile_move_left_pressed)
-		mobile_controls.move_left_released.connect(_on_mobile_move_left_released)
-		mobile_controls.move_right_pressed.connect(_on_mobile_move_right_pressed)
-		mobile_controls.move_right_released.connect(_on_mobile_move_right_released)
-		mobile_controls.jump_pressed.connect(_on_mobile_jump_pressed)
-		mobile_controls.roll_pressed.connect(_on_mobile_roll_pressed)
-		mobile_controls.shield_pressed.connect(_on_mobile_shield_pressed)
-		mobile_controls.shield_released.connect(_on_mobile_shield_released)
-		mobile_controls.attack_pressed.connect(_on_mobile_attack_pressed)
-		mobile_controls.pause_pressed.connect(_on_mobile_pause_pressed)
-		
-		# Show mobile controls
-		mobile_controls.visible = true
-
-# Mobile input signal handlers
-func _on_mobile_move_left_pressed():
-	mobile_direction = -1.0
-	# Allow simultaneous jump and roll when moving
-	_on_mobile_jump_pressed()
-	_on_mobile_roll_pressed()
-
-func _on_mobile_move_left_released():
-	if mobile_direction < 0:
-		mobile_direction = 0.0
-
-func _on_mobile_move_right_pressed():
-	mobile_direction = 1.0
-	# Allow simultaneous jump and roll when moving
-	_on_mobile_jump_pressed()
-	_on_mobile_roll_pressed()
-
-func _on_mobile_move_right_released():
-	if mobile_direction > 0:
-		mobile_direction = 0.0
-
-func _on_mobile_jump_pressed():
-	mobile_jump_pressed = true
-
-func _on_mobile_roll_pressed():
-	mobile_roll_pressed = true
-
-func _on_mobile_shield_pressed():
-	mobile_shield_active = true
-
-func _on_mobile_shield_released():
-	mobile_shield_active = false
-
-# ZMIANA: Jeden handler dla przycisku ataku
-func _on_mobile_attack_pressed():
-	mobile_attack_pressed = true
-
-func _on_mobile_pause_pressed():
-	# Handle pause functionality
-	var world = get_node_or_null("/root/world")
-	if world:
-		var paused_menu = world.get_node_or_null("CanvasLayer/PausedMenu")
-		if paused_menu:
-			paused_menu.visible = true
-			get_tree().paused = true
-
 func handle_inputs():
 	var can_act = state not in [PlayerState.ATTACKING]
 	var can_jump = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]
 	var can_roll = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]  # Remove JUMPING restriction
 
-	# Handle jump input (keyboard + mobile + mouse middle click) - Allow during any movement
-	var jump_input = Input.is_action_just_pressed("jump_button") or mobile_jump_pressed
+	# Handle jump input (keyboard) - Allow during any movement
+	var jump_input = Input.is_action_just_pressed("jump_button")
 	# Allow jumping with coyote time for better feel
 	if jump_input and can_coyote_jump() and can_jump:
 		velocity.y = JUMP_VELOCITY
@@ -272,25 +191,15 @@ func handle_inputs():
 		# Don't change state to JUMPING if already rolling - maintain rolling state
 		if state != PlayerState.ROLLING:
 			state = PlayerState.JUMPING
-		# Reset mobile input after successful jump
-		mobile_jump_pressed = false
 
-	# Handle roll input (keyboard + mobile) - Allow during movement and in air
-	var roll_input = Input.is_action_just_pressed("roll_button") or mobile_roll_pressed
+	# Handle roll input (keyboard) - Allow during movement and in air
+	var roll_input = Input.is_action_just_pressed("roll_button")
 	# Allow rolling in air and on ground (except when attacking or shielding)
 	if roll_input and can_roll:
 		start_roll()
-		# Reset mobile input after successful roll
-		mobile_roll_pressed = false
-	
-	# Reset mobile inputs if they weren't used (to prevent sticking)
-	if not (jump_input and can_coyote_jump() and can_jump):
-		mobile_jump_pressed = false
-	if not (roll_input and can_roll):
-		mobile_roll_pressed = false
 
-	# Handle attack input (keyboard + mobile) - Simplified combo logic
-	var attack_input = Input.is_action_just_pressed("attack_button") or mobile_attack_pressed
+	# Handle attack input (keyboard) - Simplified combo logic
+	var attack_input = Input.is_action_just_pressed("attack_button")
 	if attack_input:
 		if can_act:
 			# Start new attack if we can act
@@ -298,11 +207,9 @@ func handle_inputs():
 		elif state == PlayerState.ATTACKING and can_combo:
 			# Start next combo attack immediately if combo window is open
 			start_next_attack()
-	
-	mobile_attack_pressed = false
 
-	# Handle shield input (keyboard + mobile)
-	var shield_input = Input.is_action_pressed("shield_button") or mobile_shield_active
+	# Handle shield input (keyboard)
+	var shield_input = Input.is_action_pressed("shield_button")
 	if shield_input and can_act:
 		state = PlayerState.SHIELDING
 		$ShieldBox.monitoring = true
@@ -327,7 +234,7 @@ func start_next_attack():
 	
 	# Set attack direction based on current input or maintain last direction
 	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
-	var current_input_direction = keyboard_direction + mobile_direction
+	var current_input_direction = keyboard_direction
 	current_input_direction = clamp(current_input_direction, -1.0, 1.0)
 	
 	# Update attack direction: use input direction if available, otherwise keep last direction
@@ -366,11 +273,11 @@ func start_next_attack():
 
 # IMPROVED: Enhanced movement with better attack handling
 func handle_movement():
-	# Get direction from keyboard and mobile controls
+	# Get direction from keyboard
 	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
-	direction = keyboard_direction + mobile_direction
+	direction = keyboard_direction
 	
-	# Clamp to prevent double speed when both inputs are active
+	# Clamp to prevent issues
 	direction = clamp(direction, -1.0, 1.0)
 	
 	# Update last_direction for flipping, but be more careful during attacks
