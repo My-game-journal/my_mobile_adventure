@@ -61,7 +61,7 @@ text = "Ustawienia
 [node name="Zamknij" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_styles/hover = SubResource("StyleBoxEmpty_ekxnf")
+theme_override_styles/hover_pressed_mirrored = SubResource("StyleBoxEmpty_ekxnf")
 text = "Zamknij"
 
 [node name="OptionsMenu" parent="." instance=ExtResource("2_ekxnf")]
