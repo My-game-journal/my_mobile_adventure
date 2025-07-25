@@ -236,9 +236,6 @@ func setup_mobile_controls():
 		
 		# Show mobile controls
 		mobile_controls.visible = true
-		print("Mobile controls connected successfully!")
-	else:
-		print("Warning: Mobile controls not found!")
 
 func setup_dynamic_features():
 	# Initialize dynamic gameplay features
