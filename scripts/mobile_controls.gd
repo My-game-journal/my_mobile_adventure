@@ -37,18 +37,6 @@ func toggle_mobile_controls():
 	mobile_controls_enabled = not mobile_controls_enabled
 	set_mobile_controls_visibility(mobile_controls_enabled)
 
-func set_button_opacity(opacity: float):
-	"""Change the opacity of all buttons (0.0 to 1.0)"""
-	var new_modulate = Color(1, 1, 1, opacity)
-	
-	pause_button.modulate = new_modulate
-	move_left_button.modulate = new_modulate
-	move_right_button.modulate = new_modulate
-	shield_button.modulate = new_modulate
-	roll_button.modulate = new_modulate
-	jump_button.modulate = new_modulate
-	attack_button.modulate = new_modulate
-
 # Optional: Handle input events for debugging
 func _input(event):
 	# Toggle mobile controls 
