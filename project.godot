@@ -21,11 +21,13 @@ saveloadglobal="*res://scripts/global_save_load.gd"
 
 [display]
 
-window/size/viewport_width=1920
-window/size/viewport_height=1080
-window/size/mode=3
-window/stretch/mode="viewport"
-window/stretch/aspect="keep_width"
+window/size/viewport_width=1080
+window/size/viewport_height=1920
+window/size/mode=2
+window/size/resizable=false
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
 
 [global_group]
 
@@ -74,7 +76,33 @@ toggle_controls_button={
 ]
 }
 
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+pointing/emulate_mouse_from_touch=true
+
+[layer_names]
+
+2d_render/layer_1="UI"
+2d_render/layer_2="Player"
+2d_render/layer_3="Environment"
+
+[memory]
+
+limits/message_queue/max_size_mb=64
+
+[physics]
+
+common/physics_ticks_per_second=60
+common/physics_jitter_fix=1.0
+
 [rendering]
 
+renderer/rendering_method="mobile"
 textures/canvas_textures/default_texture_filter=0
+textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.290196, 0.219608, 0.0862745, 1)
+2d/use_pixel_snap=true
+anti_aliasing/quality/msaa_2d=0
+anti_aliasing/quality/msaa_3d=0
+anti_aliasing/quality/screen_space_aa=0
