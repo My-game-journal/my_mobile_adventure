@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://5bvenew3d1ml"
+path="res://.godot/imported/Hexed Shadows.wav-87b8782e4b0ad9caae2bfe463fab7998.sample"
+
+[deps]
+
+source_file="res://music/Hexed Shadows.wav"
+dest_files=["res://.godot/imported/Hexed Shadows.wav-87b8782e4b0ad9caae2bfe463fab7998.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
