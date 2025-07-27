@@ -1,7 +1,5 @@
 extends CanvasLayer
 
-
-
 @onready var pause_button = $ControlPause/ControlPauseButton
 @onready var move_left_button = $ControlMove/ControlMoveLeftButton
 @onready var move_right_button = $ControlMove/ControlMoveRightButton

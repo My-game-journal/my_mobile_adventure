@@ -18,7 +18,6 @@ func _physics_process(_delta):
 	velocity.x = direction.x * speed
 	move_and_slide()
 	$AnimatedSprite2D.flip_h = direction.x > 0
-	# Detect collision with wall and react
 	if is_on_wall():
 		_set_random_direction()
 		$AnimatedSprite2D.play("fly")

@@ -2,7 +2,7 @@ extends Node
 
 class_name GlobalSaveLoad
 
-const SAVE_PATH = "user://saved_game.txt"  # Use user:// for writable path!
+const SAVE_PATH = "user://saved_game.txt" 
 
 func save_game_data(position: Vector2, health: int) -> void:
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -24,4 +24,4 @@ func load_game_data() -> Dictionary:
 			file.close()
 			return result
 		file.close()
-	return {}  # Empty if fails
+	return {}  

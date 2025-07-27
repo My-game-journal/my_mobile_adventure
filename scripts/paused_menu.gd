@@ -12,7 +12,6 @@ func _on_wróć_do_gry_pressed() -> void:
 func _on_zapisz_pressed() -> void:
 	var player = get_node_or_null("/root/world/level_layers/player")
 	if player:
-		# Save the actual player health, not the health bar value
 		saveloadglobal.save_game_data(player.position, player.health)
 
 func _on_wczytaj_pressed() -> void:
@@ -24,7 +23,6 @@ func _on_wczytaj_pressed() -> void:
 		return
 	player.position = save_data["position"]
 	player.health = save_data["health"]
-	# Update health bar to match loaded health
 	var health_bar = player.get_node_or_null("CanvasLayer/HealthBar")
 	if health_bar:
 		health_bar.value = save_data["health"]

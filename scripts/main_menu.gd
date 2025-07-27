@@ -11,7 +11,6 @@ extends Control
 
 func _ready():
 	handle_connecting_signals()
-	# 🔁 Muzyka zapętlona z ręcznie ustawionymi punktami pętli
 	var stream = music_player.stream
 	if stream is AudioStreamWAV:
 		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
@@ -30,7 +29,6 @@ func _on_wczytaj_pressed() -> void:
 		if player:
 			player.position = save_data["position"]
 			player.health = save_data["health"]
-			# Update health bar to match loaded health
 			var health_bar = player.get_node_or_null("CanvasLayer/HealthBar")
 			if health_bar:
 				health_bar.value = save_data["health"]

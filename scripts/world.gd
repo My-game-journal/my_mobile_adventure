@@ -1,4 +1,3 @@
-# World.gd
 extends Node
 
 func _ready():
