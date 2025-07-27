@@ -21,22 +21,18 @@ var time_accumulator := 0.0
 var camera_target_position := Vector2.ZERO
 var camera_smooth_speed := 0.5
 
-# Combo system variables - Simplified approach
 var combo_sequence = ["attack_0", "attack_1", "attack_2"]
 var current_combo_index := 0
-var can_combo := false  # Whether we can continue the combo
+var can_combo := false
 var combo_timer: Timer
 
-# Attack safety variables
 var attack_stuck_timer: Timer
-var attack_stuck_timeout := 2.0  # Maximum time to stay in attack state
+var attack_stuck_timeout := 2.0
 
-# Coyote time for better jumping (allows jumping shortly after leaving ground)
-var coyote_time := 0.15  # 150ms coyote time
+var coyote_time := 0.15
 var coyote_timer := 0.0
 var was_on_floor := false
 
-# Dynamic gameplay variables
 var momentum_multiplier := 1.0
 var combo_momentum := 0.0
 var air_dash_available := false
@@ -77,17 +73,15 @@ func _ready():
 	setup_dynamic_features()
 
 func _on_combo_timeout():
-	# Reset combo po upływie czasu
 	current_combo_index = 0
 	can_combo = false
 
 func _on_attack_stuck_timeout():
-	# Safety mechanism: force exit from attack state if stuck too long
 	if state == PlayerState.ATTACKING:
 		state = PlayerState.IDLE
 		can_combo = false
 		current_combo_index = 0
-		velocity.x = 0  # Clear any residual velocity
+		velocity.x = 0
 
 func _physics_process(delta: float) -> void:
 	handle_gravity(delta)
@@ -115,13 +109,11 @@ func _physics_process(delta: float) -> void:
 		time_accumulator = 0.0
 
 func update_coyote_time(delta: float) -> void:
-	# Update coyote time for better jumping feel
 	if is_on_floor():
 		coyote_timer = coyote_time
 		was_on_floor = true
-	else:
-		if was_on_floor:
-			coyote_timer -= delta
+	elif was_on_floor:
+		coyote_timer -= delta
 		if coyote_timer <= 0:
 			was_on_floor = false
 
@@ -253,10 +245,7 @@ func update_sprite_flip():
 	$AnimatedSprite2D.flip_h = last_direction < 0
 
 func transition_to_appropriate_state():
-	if direction != 0:
-		state = PlayerState.RUNNING
-	else:
-		state = PlayerState.IDLE
+	state = PlayerState.RUNNING if direction != 0 else PlayerState.IDLE
 
 func handle_inputs():
 	var can_act = state not in [PlayerState.ATTACKING, PlayerState.JUMPING] and is_on_floor()
@@ -320,34 +309,15 @@ func handle_inputs():
 
 # IMPROVED: Better attack handling with consistent direction
 func start_next_attack():
-	# Restart combo timer
 	combo_timer.start()
-	
-	# Start attack safety timer
 	attack_stuck_timer.start()
-	
-	# Disable combo window initially
 	can_combo = false
-	
-	# Set attack direction based on current input or maintain last direction
-	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
-	var current_input_direction = keyboard_direction
-	current_input_direction = clamp(current_input_direction, -1.0, 1.0)
-	
-	# Update attack direction: use input direction if available, otherwise keep last direction
-	if current_input_direction != 0:
-		last_direction = current_input_direction
-	
-	# Set the flip direction for this attack
+	var input_dir = clamp(Input.get_axis("move_left_button", "move_right_button"), -1.0, 1.0)
+	if input_dir != 0:
+		last_direction = input_dir
 	update_sprite_flip()
-	
-	# Pobierz nazwę animacji dla obecnego indeksu combo
 	var anim_name = combo_sequence[current_combo_index]
-	
-	# Wybierz odpowiedni hitbox
 	var hitbox = get_hitbox_for_attack(anim_name)
-	
-	# Uruchom atak
 	state = PlayerState.ATTACKING
 	$AnimatedSprite2D.play(anim_name)
 	update_hitbox_flip(hitbox)
@@ -355,60 +325,35 @@ func start_next_attack():
 	for child in hitbox.get_children():
 		if child is CollisionShape2D or child is CollisionPolygon2D:
 			child.disabled = true
-	
-	# Add camera shake based on attack type and combo momentum
 	var shake_intensity = 0.5 + (combo_momentum * 0.5)
-	match anim_name:
-		"attack_0":
-			apply_camera_shake(shake_intensity)
-		"attack_1":
-			apply_camera_shake(shake_intensity * 1.2)
-		"attack_2":
-			apply_camera_shake(shake_intensity * 1.5)  # Strongest shake for final combo
-	
-	# Przygotuj następny krok combo
+	if anim_name == "attack_0":
+		apply_camera_shake(shake_intensity)
+	elif anim_name == "attack_1":
+		apply_camera_shake(shake_intensity * 1.2)
+	elif anim_name == "attack_2":
+		apply_camera_shake(shake_intensity * 1.5)
 	current_combo_index = (current_combo_index + 1) % combo_sequence.size()
 
 # IMPROVED: Enhanced movement with better attack handling and dynamic features
 func handle_movement():
-	# Get direction from keyboard only
-	var keyboard_direction = Input.get_axis("move_left_button", "move_right_button")
-	direction = keyboard_direction
-	
-	# Clamp to prevent issues
-	direction = clamp(direction, -1.0, 1.0)
-	
-	# Update last_direction for flipping - allow during attacks for better responsiveness
+	direction = clamp(Input.get_axis("move_left_button", "move_right_button"), -1.0, 1.0)
 	if direction != 0:
 		last_direction = direction
-
-	# Apply movement based on state - allow directional control in most states with dynamic features
 	match state:
 		PlayerState.ROLLING:
-			# Allow directional control during roll + boost speed with momentum
 			var roll_speed = ROLL_SPEED * momentum_multiplier
-			if direction != 0:
-				velocity.x = direction * roll_speed
-			else:
-				velocity.x = last_direction * roll_speed * 0.7  # Maintain some momentum if no input
+			velocity.x = direction * roll_speed if direction != 0 else last_direction * roll_speed * 0.7
 		PlayerState.ATTACKING:
-			# Reduced movement during attacks - not completely locked, with combo momentum
-			var attack_mobility = 0.8 + (combo_momentum * 0.2)
-			velocity.x = velocity.x * attack_mobility  # Gradual deceleration with combo bonus
-			
-			# Update hitbox flipping if direction changed during attack
+			velocity.x = velocity.x * (0.8 + (combo_momentum * 0.2))
 			if direction != 0:
 				var anim_name = combo_sequence[(current_combo_index - 1 + combo_sequence.size()) % combo_sequence.size()]
 				var current_hitbox = get_hitbox_for_attack(anim_name)
 				if current_hitbox:
 					current_hitbox.scale.x = -1 if last_direction < 0 else 1
 		PlayerState.SHIELDING:
-			# No movement during shielding
 			velocity.x = 0
 		_:
-			# Normal movement for IDLE, RUNNING, JUMPING with momentum multiplier
-			var move_speed = SPEED * momentum_multiplier
-			velocity.x = direction * move_speed
+			velocity.x = direction * SPEED * momentum_multiplier
 
 func update_animation():
 	# Allow flipping at any time, including during attacks

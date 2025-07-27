@@ -6,12 +6,7 @@ var random_timer: Timer
 
 func _ready():
 	randomize()
-	var rand_value = randf_range(-1.0, 1.0)
-	if rand_value > 0.0:
-		direction.x = 1
-	else:
-		direction.x = -1
-
+	_set_random_direction()
 	random_timer = Timer.new()
 	random_timer.wait_time = 2.0
 	random_timer.one_shot = false
@@ -22,21 +17,14 @@ func _ready():
 func _physics_process(_delta):
 	velocity.x = direction.x * speed
 	move_and_slide()
-
 	$AnimatedSprite2D.flip_h = direction.x > 0
-
 	# Detect collision with wall and react
 	if is_on_wall():
-		var rand_value = randf_range(-1.0, 1.0)
-		if rand_value > 0.0:
-			direction.x = 1
-		else:
-			direction.x = -1
+		_set_random_direction()
 		$AnimatedSprite2D.play("fly")
 
 func _on_random_timer_timeout():
-	var rand_value = randf_range(-1.0, 1.0)
-	if rand_value > 0.0:
-		direction.x = 1
-	else:
-		direction.x = -1
+	_set_random_direction()
+
+func _set_random_direction():
+	direction.x = 1 if randf_range(-1.0, 1.0) > 0.0 else -1

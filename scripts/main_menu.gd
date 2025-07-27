@@ -1,16 +1,16 @@
 extends Control
 
-@onready var start_button = $"VBoxContainer/Nowa gra" as Button
-@onready var exit_button = $VBoxContainer/Zamknij as Button
-@onready var options_button = $VBoxContainer/Ustawienia as Button
-@onready var options_menu = $OptionsMenu as OptionsMenu
-@onready var v_box_container = $VBoxContainer as VBoxContainer
+@onready var start_button = $"VBoxContainer/Nowa gra"
+@onready var exit_button = $VBoxContainer/Zamknij
+@onready var options_button = $VBoxContainer/Ustawienia
+@onready var options_menu = $OptionsMenu
+@onready var v_box_container = $VBoxContainer
 
-@onready var start_level = preload("res://scenes/world.tscn") as PackedScene
+@onready var start_level = preload("res://scenes/world.tscn")
 @onready var music_player = $MusicMenuPlayer
 
 func _ready():
-	handle_connectiong_signals()
+	handle_connecting_signals()
 	# 🔁 Muzyka zapętlona z ręcznie ustawionymi punktami pętli
 	var stream = music_player.stream
 	if stream is AudioStreamWAV:
@@ -55,7 +55,7 @@ func on_exit_options_menu() -> void:
 	v_box_container.visible = true
 	options_menu.visible = false
 
-func handle_connectiong_signals() -> void:
+func handle_connecting_signals() -> void:
 	start_button.button_down.connect(on_start_pressed)
 	options_button.button_down.connect(on_options_pressed)
 	exit_button.button_down.connect(on_exit_pressed)

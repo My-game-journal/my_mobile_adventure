@@ -17,19 +17,17 @@ func _on_zapisz_pressed() -> void:
 
 func _on_wczytaj_pressed() -> void:
 	var save_data = saveloadglobal.load_game_data()
-	if save_data.size() > 0:
-		var player = get_node_or_null("/root/world/level_layers/player")
-		if player:
-			player.position = save_data["position"]
-			player.health = save_data["health"]
-			# Update health bar to match loaded health
-			var health_bar = player.get_node_or_null("CanvasLayer/HealthBar")
-			if health_bar:
-				health_bar.value = save_data["health"]
-		else:
-			return
-	else:
+	if save_data.size() == 0:
 		return
+	var player = get_node_or_null("/root/world/level_layers/player")
+	if not player:
+		return
+	player.position = save_data["position"]
+	player.health = save_data["health"]
+	# Update health bar to match loaded health
+	var health_bar = player.get_node_or_null("CanvasLayer/HealthBar")
+	if health_bar:
+		health_bar.value = save_data["health"]
 
 func _on_zakończ_pressed() -> void:
 	get_tree().quit()
