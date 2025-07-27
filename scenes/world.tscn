@@ -3846,7 +3846,7 @@ collision_mask = 16
 position = Vector2(291, 132)
 
 [node name="owl" parent="level_layers" instance=ExtResource("10_e3hyu")]
-position = Vector2(228, 112)
+position = Vector2(236, 144)
 
 [node name="player" parent="level_layers" instance=ExtResource("3_4wyf3")]
 position = Vector2(125, 194)
