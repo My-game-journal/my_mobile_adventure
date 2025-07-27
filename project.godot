@@ -21,8 +21,8 @@ saveloadglobal="*res://scripts/global_save_load.gd"
 
 [display]
 
-window/size/viewport_width=1080
-window/size/viewport_height=1920
+window/size/viewport_width=1920
+window/size/viewport_height=1080
 window/size/mode=2
 window/size/resizable=false
 window/stretch/mode="canvas_items"
