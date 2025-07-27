@@ -40,7 +40,6 @@ var was_on_floor := false
 var momentum_multiplier := 1.0
 var combo_momentum := 0.0
 var air_dash_available := false
-var last_ground_time := 0.0
 var dynamic_camera_shake := 0.0
 var movement_streak := 0
 var last_action_time := 0.0
@@ -225,21 +224,39 @@ func update_dynamic_features(delta: float):
 	# Update air dash availability
 	if is_on_floor():
 		air_dash_available = true
-		last_ground_time = 0.0
-	else:
-		last_ground_time += delta
 	
 	# Update camera shake decay
 	if dynamic_camera_shake > 0:
 		dynamic_camera_shake = max(dynamic_camera_shake - delta * 8.0, 0.0)
 	
 	# Reset movement streak if idle too long
-	if Time.get_time_dict_from_system()["second"] - last_action_time > 3.0:
+	var current_time = Time.get_time_dict_from_system()["second"]
+	if current_time - last_action_time > 3.0:
 		movement_streak = 0
 		momentum_multiplier = 1.0
 
 func apply_camera_shake(intensity: float):
 	dynamic_camera_shake = intensity
+
+func get_hitbox_for_attack(attack_name: String) -> Node2D:
+	match attack_name:
+		"attack_0":
+			return $HitBoxAttack0
+		"attack_1":
+			return $HitBoxAttack1
+		"attack_2":
+			return $HitBoxAttack2
+		_:
+			return $HitBoxAttack0
+
+func update_sprite_flip():
+	$AnimatedSprite2D.flip_h = last_direction < 0
+
+func transition_to_appropriate_state():
+	if direction != 0:
+		state = PlayerState.RUNNING
+	else:
+		state = PlayerState.IDLE
 
 func handle_inputs():
 	var can_act = state not in [PlayerState.ATTACKING, PlayerState.JUMPING] and is_on_floor()
@@ -322,22 +339,13 @@ func start_next_attack():
 		last_direction = current_input_direction
 	
 	# Set the flip direction for this attack
-	$AnimatedSprite2D.flip_h = last_direction < 0
+	update_sprite_flip()
 	
 	# Pobierz nazwę animacji dla obecnego indeksu combo
 	var anim_name = combo_sequence[current_combo_index]
 	
 	# Wybierz odpowiedni hitbox
-	var hitbox
-	match anim_name:
-		"attack_0":
-			hitbox = $HitBoxAttack0
-		"attack_1":
-			hitbox = $HitBoxAttack1
-		"attack_2":
-			hitbox = $HitBoxAttack2
-		_:
-			hitbox = $HitBoxAttack0
+	var hitbox = get_hitbox_for_attack(anim_name)
 	
 	# Uruchom atak
 	state = PlayerState.ATTACKING
@@ -390,18 +398,8 @@ func handle_movement():
 			
 			# Update hitbox flipping if direction changed during attack
 			if direction != 0:
-				var current_hitbox
 				var anim_name = combo_sequence[(current_combo_index - 1 + combo_sequence.size()) % combo_sequence.size()]
-				match anim_name:
-					"attack_0":
-						current_hitbox = $HitBoxAttack0
-					"attack_1":
-						current_hitbox = $HitBoxAttack1
-					"attack_2":
-						current_hitbox = $HitBoxAttack2
-					_:
-						current_hitbox = $HitBoxAttack0
-				
+				var current_hitbox = get_hitbox_for_attack(anim_name)
 				if current_hitbox:
 					current_hitbox.scale.x = -1 if last_direction < 0 else 1
 		PlayerState.SHIELDING:
@@ -414,7 +412,7 @@ func handle_movement():
 
 func update_animation():
 	# Allow flipping at any time, including during attacks
-	$AnimatedSprite2D.flip_h = last_direction < 0
+	update_sprite_flip()
 
 	if not is_on_floor():
 		# In air animations - prioritize jumping if in jumping state
@@ -433,16 +431,10 @@ func update_animation():
 				# Let jump animation finish before transitioning
 				if not $AnimatedSprite2D.is_playing() or is_last_frame("jump"):
 					# Jump animation finished, now transition to appropriate state
-					if direction != 0:
-						state = PlayerState.RUNNING
-					else:
-						state = PlayerState.IDLE
+					transition_to_appropriate_state()
 			else:
 				# If not playing jump animation, transition immediately
-				if direction != 0:
-					state = PlayerState.RUNNING
-				else:
-					state = PlayerState.IDLE
+				transition_to_appropriate_state()
 		
 		match state:
 			PlayerState.SHIELDING:
@@ -470,7 +462,7 @@ func start_roll():
 		return
 	
 	state = PlayerState.ROLLING
-	$AnimatedSprite2D.flip_h = last_direction < 0
+	update_sprite_flip()
 	$AnimatedSprite2D.play("roll")
 	
 	# Add horizontal boost for air rolls
@@ -485,7 +477,7 @@ func start_roll():
 func start_air_dash():
 	# Special air dash with directional control
 	state = PlayerState.ROLLING
-	$AnimatedSprite2D.flip_h = last_direction < 0
+	update_sprite_flip()
 	$AnimatedSprite2D.play("roll")
 	
 	# Air dash gives strong horizontal momentum and slight upward boost
@@ -497,7 +489,7 @@ func start_air_dash():
 
 func update_hitbox_flip(hitbox: Node2D):
 	# Update both sprite and hitbox flipping based on current direction
-	$AnimatedSprite2D.flip_h = last_direction < 0
+	update_sprite_flip()
 	hitbox.scale.x = -1 if last_direction < 0 else 1
 
 func handle_hitbox_frames(hitbox: Node2D, active: bool):
@@ -548,10 +540,7 @@ func _on_AnimatedSprite2D_frame_changed():
 		"jump":
 			if is_last_frame(anim) and is_on_floor():
 				# Jump animation finished and player is on ground - transition to appropriate state
-				if direction != 0:
-					state = PlayerState.RUNNING
-				else:
-					state = PlayerState.IDLE
+				transition_to_appropriate_state()
 
 # IMPROVED: Better combo finish with stuck prevention
 func handle_combo_finish():
