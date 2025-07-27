@@ -53,7 +53,6 @@ func _ready():
 	
 	$Camera2D.position_smoothing_enabled = false
 	
-	
 	combo_timer = Timer.new()
 	combo_timer.wait_time = COMBO_TIMEOUT
 	combo_timer.one_shot = true
@@ -180,16 +179,6 @@ func setup_dynamic_features():
 	movement_streak = 0
 	dynamic_camera_shake = 0.0
 
-func update_movement_streak():
-	var current_time = Time.get_time_dict_from_system()["second"]
-	if current_time - last_action_time < 2.0:
-		movement_streak += 1
-	else:
-		movement_streak = 1
-	last_action_time = current_time
-	
-	momentum_multiplier = min(1.0 + (movement_streak * 0.1), 1.5)
-
 func update_dynamic_features(delta: float):
 	if combo_momentum > 0:
 		combo_momentum = max(combo_momentum - delta * 2.0, 0.0)
@@ -279,7 +268,6 @@ func start_next_attack():
 	var input_dir = clamp(Input.get_axis("move_left_button", "move_right_button"), -1.0, 1.0)
 	if input_dir != 0:
 		last_direction = input_dir
-	update_sprite_flip()
 	var anim_name = combo_sequence[current_combo_index]
 	var hitbox = get_hitbox_for_attack(anim_name)
 	state = PlayerState.ATTACKING
@@ -302,6 +290,7 @@ func handle_movement():
 	direction = clamp(Input.get_axis("move_left_button", "move_right_button"), -1.0, 1.0)
 	if direction != 0:
 		last_direction = direction
+		$AnimatedSprite2D.flip_h = last_direction < 0
 	match state:
 		PlayerState.ROLLING:
 			var roll_speed = ROLL_SPEED * momentum_multiplier
@@ -319,8 +308,6 @@ func handle_movement():
 			velocity.x = direction * SPEED * momentum_multiplier
 
 func update_animation():
-	update_sprite_flip()
-
 	if not is_on_floor():
 		if state == PlayerState.JUMPING:
 			$AnimatedSprite2D.play("jump")
@@ -359,7 +346,7 @@ func start_roll():
 		return
 	
 	state = PlayerState.ROLLING
-	update_sprite_flip()
+	$AnimatedSprite2D.flip_h = last_direction < 0
 	$AnimatedSprite2D.play("roll")
 	
 	if not is_on_floor():
@@ -369,7 +356,7 @@ func start_roll():
 
 func start_air_dash():
 	state = PlayerState.ROLLING
-	update_sprite_flip()
+	$AnimatedSprite2D.flip_h = last_direction < 0
 	$AnimatedSprite2D.play("roll")
 	
 	velocity.x = last_direction * ROLL_SPEED * 1.5
