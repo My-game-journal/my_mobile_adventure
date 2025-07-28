@@ -12,7 +12,7 @@ You awaken in a forest after a mysterious break from life. Strange marks on your
 
 Your goal: **examine your blood** and find a trustworthy doctor. But can anyone be trusted?
 
-You begin your journey wearing medieval armor, wielding a sword and shield — found after a party in the woods. The story unfolds through environmental clues, cryptic notes, and NPC interactions. Themes include **trust**, **survival**, and the **psychological toll of isolation and uncertainty**.
+You begin your journey wearing medieval armor, wielding a sword and shield — found after a party in the woods. The story unfolds through environmental clues, cryptic notes, and NPC interactions. Themes include **trust**, **survival**, and the **psychological toll of isolation and uncertainty**. (There is only a piece of gameplay available, cut out the whole plot)
 
 ### 🎮 Features in progress
 
@@ -77,7 +77,7 @@ Budząc się w lesie po tajemniczej przerwie od życia, odkrywamy dziwne ślady 
 
 Naszym celem jest **zbadanie krwi** i odnalezienie godnego zaufania lekarza. Ale czy można komukolwiek zaufać?
 
-Rozpoczynamy w średniowiecznej zbroi, z mieczem i tarczą — znalezionymi po imprezie w lesie. Fabuła rozwija się poprzez wskazówki środowiskowe, tajemnicze notatki i interakcje z NPC. Gra porusza tematy **zaufania**, **przetrwania** oraz **psychologicznego wpływu izolacji i niepewności**.
+Rozpoczynamy w średniowiecznej zbroi, z mieczem i tarczą — znalezionymi po imprezie w lesie. Fabuła rozwija się poprzez wskazówki środowiskowe, tajemnicze notatki i interakcje z NPC. Gra porusza tematy **zaufania**, **przetrwania** oraz **psychologicznego wpływu izolacji i niepewności**. (Jest tylko dostępny kawałek gameplay'u wycięty z całej fabuły)
 
 ### 🎮 Funkcje w trakcie tworzenia
 
