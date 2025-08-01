@@ -23,7 +23,7 @@ func _on_behavior_timer_timeout():
 		animated_sprite.play("idle")
 		behavior_timer.wait_time = 7.0
 	else:
-		direction = Vector2.RIGHT if rng.randi_range(0, 1) else Vector2.LEFT
+		direction = Vector2.LEFT if rng.randi_range(0, 1) else Vector2.RIGHT
 		animated_sprite.flip_h = direction.x > 0
 		animated_sprite.play("walk")
 		behavior_timer.wait_time = rng.randf_range(1.0, 5.0)
@@ -31,7 +31,6 @@ func _on_behavior_timer_timeout():
 
 func _reverse_direction():
 	direction.x *= -1
-	direction = Vector2.RIGHT if direction.x > 0 else Vector2.LEFT
 	animated_sprite.flip_h = direction.x > 0
 
 func _physics_process(delta):

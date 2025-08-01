@@ -39,33 +39,38 @@ var dynamic_camera_shake := 0.0
 var movement_streak := 0
 var last_action_time := 0.0
 
-func _ready():
-	$AnimatedSprite2D.frame_changed.connect(_on_AnimatedSprite2D_frame_changed)
-	$HitBoxAttack0.connect("body_entered", Callable(self, "_on_hitbox_body_entered"))
-	$HitBoxAttack1.connect("body_entered", Callable(self, "_on_hitbox_body_entered"))
-	$HitBoxAttack2.connect("body_entered", Callable(self, "_on_hitbox_body_entered"))
+@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var camera: Camera2D = $Camera2D
+@onready var health_bar = get_node_or_null("CanvasLayer/HealthBar")
+@onready var hitboxes = {
+	"attack_0": $HitBoxAttack0,
+	"attack_1": $HitBoxAttack1,
+	"attack_2": $HitBoxAttack2
+}
 
-	var health_bar = get_node_or_null("CanvasLayer/HealthBar")
+func _ready():
+	animated_sprite.frame_changed.connect(_on_AnimatedSprite2D_frame_changed)
+	for hitbox in hitboxes.values():
+		hitbox.connect("body_entered", Callable(self, "_on_hitbox_body_entered"))
+
 	if health_bar:
 		health_bar.value = health
 	
 	camera_target_position = global_position
+	camera.position_smoothing_enabled = false
 	
-	$Camera2D.position_smoothing_enabled = false
-	
-	combo_timer = Timer.new()
-	combo_timer.wait_time = COMBO_TIMEOUT
-	combo_timer.one_shot = true
-	combo_timer.connect("timeout", Callable(self, "_on_combo_timeout"))
-	add_child(combo_timer)
-	
-	attack_stuck_timer = Timer.new()
-	attack_stuck_timer.wait_time = attack_stuck_timeout
-	attack_stuck_timer.one_shot = true
-	attack_stuck_timer.connect("timeout", Callable(self, "_on_attack_stuck_timeout"))
-	add_child(attack_stuck_timer)
+	combo_timer = _create_timer(COMBO_TIMEOUT, "_on_combo_timeout")
+	attack_stuck_timer = _create_timer(attack_stuck_timeout, "_on_attack_stuck_timeout")
 	
 	setup_dynamic_features()
+
+func _create_timer(wait_time: float, callback: String) -> Timer:
+	var timer = Timer.new()
+	timer.wait_time = wait_time
+	timer.one_shot = true
+	timer.connect("timeout", Callable(self, callback))
+	add_child(timer)
+	return timer
 
 func _on_combo_timeout():
 	current_combo_index = 0
@@ -94,7 +99,6 @@ func _physics_process(delta: float) -> void:
 	time_accumulator += delta
 	if time_accumulator >= health_decrease_interval:
 		health = max(health - health_decrease_rate, 0)
-		var health_bar = get_node_or_null("CanvasLayer/HealthBar")
 		if health_bar:
 			health_bar.value = health
 			if health_bar.value <= 0:
@@ -158,7 +162,6 @@ func update_smooth_camera(delta: float) -> void:
 	elif abs(velocity.x) < 10.0:
 		adaptive_speed_x = camera_smooth_speed * 0.7
 	
-	var camera = $Camera2D
 	var current_pos = camera.global_position
 	
 	var new_x = lerp(current_pos.x, camera_target_position.x, adaptive_speed_x * delta)
@@ -198,18 +201,10 @@ func apply_camera_shake(intensity: float):
 	dynamic_camera_shake = intensity
 
 func get_hitbox_for_attack(attack_name: String) -> Node2D:
-	match attack_name:
-		"attack_0":
-			return $HitBoxAttack0
-		"attack_1":
-			return $HitBoxAttack1
-		"attack_2":
-			return $HitBoxAttack2
-		_:
-			return $HitBoxAttack0
+	return hitboxes.get(attack_name, hitboxes["attack_0"])
 
 func update_sprite_flip():
-	$AnimatedSprite2D.flip_h = last_direction < 0
+	animated_sprite.flip_h = last_direction < 0
 
 func transition_to_appropriate_state():
 	state = PlayerState.RUNNING if direction != 0 else PlayerState.IDLE
@@ -219,7 +214,7 @@ func handle_inputs():
 	var can_jump = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]
 	var can_roll = state not in [PlayerState.ATTACKING, PlayerState.SHIELDING]
 	
-	var is_jump_animation_playing = $AnimatedSprite2D.animation == "jump" and $AnimatedSprite2D.is_playing()
+	var is_jump_animation_playing = animated_sprite.animation == "jump" and animated_sprite.is_playing()
 	if is_jump_animation_playing:
 		can_act = false
 
@@ -271,26 +266,22 @@ func start_next_attack():
 	var anim_name = combo_sequence[current_combo_index]
 	var hitbox = get_hitbox_for_attack(anim_name)
 	state = PlayerState.ATTACKING
-	$AnimatedSprite2D.play(anim_name)
+	animated_sprite.play(anim_name)
 	update_hitbox_flip(hitbox)
 	hitbox.monitoring = false
 	for child in hitbox.get_children():
 		if child is CollisionShape2D or child is CollisionPolygon2D:
 			child.disabled = true
 	var shake_intensity = 0.5 + (combo_momentum * 0.5)
-	if anim_name == "attack_0":
-		apply_camera_shake(shake_intensity)
-	elif anim_name == "attack_1":
-		apply_camera_shake(shake_intensity * 1.2)
-	elif anim_name == "attack_2":
-		apply_camera_shake(shake_intensity * 1.5)
+	var shake_multipliers = {"attack_0": 1.0, "attack_1": 1.2, "attack_2": 1.5}
+	apply_camera_shake(shake_intensity * shake_multipliers.get(anim_name, 1.0))
 	current_combo_index = (current_combo_index + 1) % combo_sequence.size()
 
 func handle_movement():
 	direction = clamp(Input.get_axis("move_left_button", "move_right_button"), -1.0, 1.0)
 	if direction != 0:
 		last_direction = direction
-		$AnimatedSprite2D.flip_h = last_direction < 0
+		animated_sprite.flip_h = last_direction < 0
 	match state:
 		PlayerState.ROLLING:
 			var roll_speed = ROLL_SPEED * momentum_multiplier
@@ -310,34 +301,34 @@ func handle_movement():
 func update_animation():
 	if not is_on_floor():
 		if state == PlayerState.JUMPING:
-			$AnimatedSprite2D.play("jump")
+			animated_sprite.play("jump")
 		elif state == PlayerState.ROLLING:
-			$AnimatedSprite2D.play("roll")
+			animated_sprite.play("roll")
 		else:
-			$AnimatedSprite2D.play("jump")
+			animated_sprite.play("jump")
 	else:
 		if state == PlayerState.JUMPING:
-			var current_anim = $AnimatedSprite2D.animation
+			var current_anim = animated_sprite.animation
 			if current_anim == "jump":
-				if not $AnimatedSprite2D.is_playing() or is_last_frame("jump"):
+				if not animated_sprite.is_playing() or is_last_frame("jump"):
 					transition_to_appropriate_state()
 			else:
 				transition_to_appropriate_state()
 		
 		match state:
 			PlayerState.SHIELDING:
-				$AnimatedSprite2D.play("shield")
+				animated_sprite.play("shield")
 			PlayerState.ROLLING:
-				$AnimatedSprite2D.play("roll")
+				animated_sprite.play("roll")
 			PlayerState.ATTACKING:
 				pass
 			_:
 				if direction != 0:
-					$AnimatedSprite2D.play("run")
+					animated_sprite.play("run")
 					if state == PlayerState.JUMPING:
 						state = PlayerState.RUNNING
 				else:
-					$AnimatedSprite2D.play("idle")
+					animated_sprite.play("idle")
 					if state in [PlayerState.RUNNING, PlayerState.JUMPING]:
 						state = PlayerState.IDLE
 
@@ -346,8 +337,8 @@ func start_roll():
 		return
 	
 	state = PlayerState.ROLLING
-	$AnimatedSprite2D.flip_h = last_direction < 0
-	$AnimatedSprite2D.play("roll")
+	animated_sprite.flip_h = last_direction < 0
+	animated_sprite.play("roll")
 	
 	if not is_on_floor():
 		velocity.x = last_direction * ROLL_SPEED * 1.2
@@ -356,8 +347,8 @@ func start_roll():
 
 func start_air_dash():
 	state = PlayerState.ROLLING
-	$AnimatedSprite2D.flip_h = last_direction < 0
-	$AnimatedSprite2D.play("roll")
+	animated_sprite.flip_h = last_direction < 0
+	animated_sprite.play("roll")
 	
 	velocity.x = last_direction * ROLL_SPEED * 1.5
 	velocity.y = min(velocity.y, -50)
@@ -375,27 +366,27 @@ func handle_hitbox_frames(hitbox: Node2D, active: bool):
 			child.disabled = not active
 
 func is_last_frame(anim_name: String) -> bool:
-	return $AnimatedSprite2D.frame == $AnimatedSprite2D.sprite_frames.get_frame_count(anim_name) - 1
+	return animated_sprite.frame == animated_sprite.sprite_frames.get_frame_count(anim_name) - 1
 
 func _on_AnimatedSprite2D_frame_changed():
-	var anim = $AnimatedSprite2D.animation
-	var frame = $AnimatedSprite2D.frame
+	var anim = animated_sprite.animation
+	var frame = animated_sprite.frame
 
 	match anim:
 		"attack_0":
-			handle_hitbox_frames($HitBoxAttack0, frame == 5)
+			handle_hitbox_frames(hitboxes["attack_0"], frame == 5)
 			can_combo = frame >= 3
 			if is_last_frame(anim):
 				handle_combo_finish()
 
 		"attack_1":
-			handle_hitbox_frames($HitBoxAttack1, frame in [2, 5])
+			handle_hitbox_frames(hitboxes["attack_1"], frame in [2, 5])
 			can_combo = frame >= 4
 			if is_last_frame(anim):
 				handle_combo_finish()
 
 		"attack_2":
-			handle_hitbox_frames($HitBoxAttack2, frame in range(2, 6))
+			handle_hitbox_frames(hitboxes["attack_2"], frame in range(2, 6))
 			can_combo = frame >= 4
 			if is_last_frame(anim):
 				handle_combo_finish()

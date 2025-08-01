@@ -16,25 +16,25 @@ func _ready():
 		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		stream.loop_begin = 0
 		stream.loop_end = 325500
-	music_player.play()
+		music_player.play()
 
 func on_start_pressed() -> void:
 	get_tree().change_scene_to_packed(start_level)
 
 func _on_wczytaj_pressed() -> void:
 	var save_data = saveloadglobal.load_game_data()
-	if save_data.size() > 0:
-		var loaded_scene = start_level.instantiate()
-		var player = loaded_scene.get_node_or_null("level_layers/player")
-		if player:
-			player.position = save_data["position"]
-			player.health = save_data["health"]
-			var health_bar = player.get_node_or_null("CanvasLayer/HealthBar")
-			if health_bar:
-				health_bar.value = save_data["health"]
-		_switch_scene(loaded_scene)
-	else:
+	if save_data.size() == 0:
 		return
+		
+	var loaded_scene = start_level.instantiate()
+	var player = loaded_scene.get_node_or_null("level_layers/player")
+	if player:
+		player.position = save_data["position"]
+		player.health = save_data["health"]
+		var health_bar = player.get_node_or_null("CanvasLayer/HealthBar")
+		if health_bar:
+			health_bar.value = save_data["health"]
+	_switch_scene(loaded_scene)
 
 func _switch_scene(new_scene: Node) -> void:
 	get_tree().root.add_child(new_scene)
