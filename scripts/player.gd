@@ -36,8 +36,6 @@ var momentum_multiplier := 1.0
 var combo_momentum := 0.0
 var air_dash_available := false
 var dynamic_camera_shake := 0.0
-var movement_streak := 0
-var last_action_time := 0.0
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var camera: Camera2D = $Camera2D
@@ -179,7 +177,6 @@ func setup_dynamic_features():
 	momentum_multiplier = 1.0
 	combo_momentum = 0.0
 	air_dash_available = false
-	movement_streak = 0
 	dynamic_camera_shake = 0.0
 
 func update_dynamic_features(delta: float):
@@ -191,11 +188,6 @@ func update_dynamic_features(delta: float):
 	
 	if dynamic_camera_shake > 0:
 		dynamic_camera_shake = max(dynamic_camera_shake - delta * 8.0, 0.0)
-	
-	var current_time = Time.get_time_dict_from_system()["second"]
-	if current_time - last_action_time > 3.0:
-		movement_streak = 0
-		momentum_multiplier = 1.0
 
 func apply_camera_shake(intensity: float):
 	dynamic_camera_shake = intensity
@@ -225,7 +217,7 @@ func handle_inputs():
 		coyote_timer = 0
 		if state != PlayerState.ROLLING:
 			state = PlayerState.JUMPING
-		apply_camera_shake(0.5)
+		apply_camera_shake(1.0)
 
 	var roll_input = Input.is_action_just_pressed("roll_button")
 	if roll_input and can_roll:
@@ -272,7 +264,7 @@ func start_next_attack():
 	for child in hitbox.get_children():
 		if child is CollisionShape2D or child is CollisionPolygon2D:
 			child.disabled = true
-	var shake_intensity = 0.5 + (combo_momentum * 0.5)
+	var shake_intensity = 1.0 + (combo_momentum * 0.5)
 	var shake_multipliers = {"attack_0": 1.0, "attack_1": 1.2, "attack_2": 1.5}
 	apply_camera_shake(shake_intensity * shake_multipliers.get(anim_name, 1.0))
 	current_combo_index = (current_combo_index + 1) % combo_sequence.size()
@@ -281,7 +273,7 @@ func handle_movement():
 	direction = clamp(Input.get_axis("move_left_button", "move_right_button"), -1.0, 1.0)
 	if direction != 0:
 		last_direction = direction
-		animated_sprite.flip_h = last_direction < 0
+		update_sprite_flip()
 	match state:
 		PlayerState.ROLLING:
 			var roll_speed = ROLL_SPEED * momentum_multiplier
@@ -292,7 +284,7 @@ func handle_movement():
 				var anim_name = combo_sequence[(current_combo_index - 1 + combo_sequence.size()) % combo_sequence.size()]
 				var current_hitbox = get_hitbox_for_attack(anim_name)
 				if current_hitbox:
-					current_hitbox.scale.x = -1 if last_direction < 0 else 1
+					update_hitbox_flip(current_hitbox)
 		PlayerState.SHIELDING:
 			velocity.x = 0
 		_:
@@ -337,23 +329,23 @@ func start_roll():
 		return
 	
 	state = PlayerState.ROLLING
-	animated_sprite.flip_h = last_direction < 0
+	update_sprite_flip()
 	animated_sprite.play("roll")
 	
 	if not is_on_floor():
 		velocity.x = last_direction * ROLL_SPEED * 1.2
 	
-	apply_camera_shake(1.0)
+	apply_camera_shake(1.5)
 
 func start_air_dash():
 	state = PlayerState.ROLLING
-	animated_sprite.flip_h = last_direction < 0
+	update_sprite_flip()
 	animated_sprite.play("roll")
 	
 	velocity.x = last_direction * ROLL_SPEED * 1.5
 	velocity.y = min(velocity.y, -50)
 	
-	apply_camera_shake(1.5)
+	apply_camera_shake(2.0)
 
 func update_hitbox_flip(hitbox: Node2D):
 	update_sprite_flip()
@@ -420,9 +412,8 @@ func _on_hitbox_body_entered(body):
 		body.vanish()
 		
 		combo_momentum += 0.4
-		apply_camera_shake(1.2)
+		apply_camera_shake(1.7)
 		
-		movement_streak += 2
 		momentum_multiplier = min(momentum_multiplier + 0.1, 2.0)
 		
 		Engine.time_scale = 0.7
